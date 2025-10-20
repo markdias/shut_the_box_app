@@ -37,7 +37,16 @@ struct AppRootView: View {
                     .padding(.bottom, 24)
                 }
             }
-            .sheet(isPresented: $store.showSettings) {
+            .sheet(
+                isPresented: Binding(
+                    get: { store.showSettings },
+                    set: { value in
+                        if value != store.showSettings {
+                            store.toggleSettings()
+                        }
+                    }
+                )
+            ) {
                 SettingsSheetView()
                     .environmentObject(store)
                     .environmentObject(themeManager)
