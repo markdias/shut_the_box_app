@@ -7,31 +7,61 @@ enum GamePhase: String, Codable, CaseIterable {
 }
 
 enum OneDieRule: String, Codable, CaseIterable, Identifiable {
+    case afterTopTilesShut
+    case whenRemainderLessThanSix
     case never
-    case onlyWhenSevenOrLower
-    case always
 
     var id: String { rawValue }
+
     var title: String {
         switch self {
-        case .never: return "Never"
-        case .onlyWhenSevenOrLower: return "≤ 7"
-        case .always: return "Always"
+        case .afterTopTilesShut:
+            return "After Top Tiles Shut"
+        case .whenRemainderLessThanSix:
+            return "When Remainder < 6"
+        case .never:
+            return "Never"
+        }
+    }
+
+    var helpText: String {
+        switch self {
+        case .afterTopTilesShut:
+            return "Switch to a single die once tiles 7–9 are closed."
+        case .whenRemainderLessThanSix:
+            return "Use a single die when the sum of open tiles is under six."
+        case .never:
+            return "Always roll two dice."
         }
     }
 }
 
 enum ScoringMode: String, Codable, CaseIterable, Identifiable {
-    case lowestTotal
-    case highestShutCount
-    case customTarget
+    case lowestRemainder
+    case targetRace
+    case instantWin
 
     var id: String { rawValue }
+
     var title: String {
         switch self {
-        case .lowestTotal: return "Lowest Total"
-        case .highestShutCount: return "Most Tiles"
-        case .customTarget: return "Target Score"
+        case .lowestRemainder:
+            return "Lowest Remainder"
+        case .targetRace:
+            return "Cumulative Target"
+        case .instantWin:
+            return "Instant Win"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .lowestRemainder:
+            return "Score the fewest leftover pips."
+        case .targetRace:
+            return "First to reach the target total wins."
+        case .instantWin:
+            return "Any shut box ends the round immediately."
         }
     }
 }
@@ -43,16 +73,19 @@ enum ThemeOption: String, Codable, CaseIterable, Identifiable {
     case tabletop
 
     var id: String { rawValue }
+
     var displayName: String {
         switch self {
-        case .neon: return "Neon"
-        case .matrix: return "Matrix"
-        case .classic: return "Classic"
-        case .tabletop: return "Tabletop"
+        case .neon:
+            return "Neon Glow"
+        case .matrix:
+            return "Matrix Grid"
+        case .classic:
+            return "Classic Wood"
+        case .tabletop:
+            return "Tabletop Felt"
         }
     }
-
-    var cssClass: String { "theme-\(rawValue)" }
 }
 
 struct Player: Identifiable, Codable, Equatable {
@@ -60,6 +93,7 @@ struct Player: Identifiable, Codable, Equatable {
     var name: String
     var lastScore: Int
     var totalScore: Int
+    var unfinishedTurns: Int
     var hintsEnabled: Bool
 
     init(id: UUID = UUID(), name: String) {
@@ -67,6 +101,7 @@ struct Player: Identifiable, Codable, Equatable {
         self.name = name
         self.lastScore = 0
         self.totalScore = 0
+        self.unfinishedTurns = 0
         self.hintsEnabled = true
     }
 }
@@ -86,17 +121,28 @@ struct DiceRoll: Codable {
     var values: [Int] { [first, second].compactMap { $0 } }
 }
 
+enum TurnEvent: String, Codable {
+    case roll
+    case move
+    case bust
+    case win
+    case info
+    case cheat
+}
+
 struct TurnLog: Identifiable, Codable {
     let id: UUID
     let playerId: UUID
     let message: String
     let timestamp: Date
+    let event: TurnEvent
 
-    init(id: UUID = UUID(), playerId: UUID, message: String, timestamp: Date = Date()) {
+    init(id: UUID = UUID(), playerId: UUID, message: String, event: TurnEvent, timestamp: Date = Date()) {
         self.id = id
         self.playerId = playerId
         self.message = message
         self.timestamp = timestamp
+        self.event = event
     }
 }
 
@@ -122,28 +168,65 @@ struct LearningGame: Identifiable, Codable, Equatable {
     let description: String
 }
 
+struct RoundScore: Codable {
+    var score: Int
+    var tilesShut: Int
+}
+
+enum CheatCode: String, Codable, CaseIterable, Identifiable {
+    case full
+    case madness
+    case takeover
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .full:
+            return "Full"
+        case .madness:
+            return "Madness"
+        case .takeover:
+            return "Takeover"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .full:
+            return "Rig rolls toward perfect clears."
+        case .madness:
+            return "Unlock the giant 56-tile board."
+        case .takeover:
+            return "Enable auto-play, auto-retry, and hints."
+        }
+    }
+}
+
 struct GameOptions: Codable {
-    var tileRange: ClosedRange<Int>
+    var maxTile: Int
     var oneDieRule: OneDieRule
     var scoringMode: ScoringMode
-    var targetScore: Int
+    var targetGoal: Int
+    var instantWinOnShut: Bool
     var requireConfirmation: Bool
-    var showHeaderDetails: Bool
-    var instantWin: Bool
-    var enableLearningGames: Bool
     var autoRetry: Bool
-    var cheatCodes: Set<String>
+    var showHeaderDetails: Bool
+    var showCodeTools: Bool
+    var showLearningGames: Bool
+    var cheatCodes: Set<CheatCode>
 
     static let `default` = GameOptions(
-        tileRange: 1...12,
-        oneDieRule: .onlyWhenSevenOrLower,
-        scoringMode: .lowestTotal,
-        targetScore: 50,
+        maxTile: 12,
+        oneDieRule: .afterTopTilesShut,
+        scoringMode: .lowestRemainder,
+        targetGoal: 100,
+        instantWinOnShut: true,
         requireConfirmation: true,
-        showHeaderDetails: true,
-        instantWin: true,
-        enableLearningGames: false,
         autoRetry: false,
+        showHeaderDetails: true,
+        showCodeTools: false,
+        showLearningGames: false,
         cheatCodes: []
     )
 }
@@ -160,4 +243,20 @@ struct GameSettingsSnapshot: Codable {
     var round: Int
     var previousWinner: WinnerSummary?
     var theme: ThemeOption
+    var currentRoundScores: [UUID: RoundScore] = [:]
+}
+
+extension GameOptions {
+    var tileRange: ClosedRange<Int> { 1...maxTile }
+
+    var allowsMadness: Bool { maxTile > 12 }
+
+    mutating func applyCheatCodes(_ codes: Set<CheatCode>) {
+        cheatCodes = codes
+        if codes.contains(.madness) {
+            maxTile = max(maxTile, 56)
+        } else {
+            maxTile = min(maxTile, 12)
+        }
+    }
 }

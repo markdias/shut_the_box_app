@@ -8,6 +8,9 @@ struct GameBoardView: View {
         VStack(spacing: 24) {
             DiceTrayView(isCompact: isCompact)
             TileGridView(isCompact: isCompact)
+            if store.options.requireConfirmation {
+                SelectionActionBar(isCompact: isCompact)
+            }
             ProgressCardsView(isCompact: isCompact)
         }
         .padding()
@@ -48,6 +51,12 @@ struct DiceTrayView: View {
                         actionButtons
                     }
                 }
+            }
+
+            if store.pendingRoll.total > 0 {
+                Text(store.options.oneDieRule.helpText)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.6))
             }
         }
     }
@@ -112,9 +121,16 @@ struct TileGridView: View {
     var body: some View {
         LazyVGrid(columns: columns, spacing: 12) {
             ForEach(store.tiles) { tile in
-                TileView(tile: tile)
-                    .onTapGesture { store.toggleTile(tile) }
-                    .onLongPressGesture { store.toggleTile(tile) }
+                TileView(
+                    tile: tile,
+                    isHinted: store.hintsActive && store.hintedTileIds.contains(tile.id),
+                    isBestMove: store.hintsActive && store.bestMove.contains(where: { $0.id == tile.id })
+                )
+                .onTapGesture { store.toggleTile(tile) }
+                .onLongPressGesture { store.toggleTile(tile) }
+                .simultaneousGesture(TapGesture(count: 2).onEnded {
+                    if tile.value == 12 { store.forceDoubleSixCheat() }
+                })
             }
         }
     }
@@ -122,6 +138,8 @@ struct TileGridView: View {
 
 struct TileView: View {
     let tile: Tile
+    let isHinted: Bool
+    let isBestMove: Bool
 
     var body: some View {
         ZStack {
@@ -129,7 +147,7 @@ struct TileView: View {
                 .fill(tileBackground)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(tile.isSelected ? 0.8 : 0.2), lineWidth: tile.isSelected ? 4 : 1)
+                        .stroke(outlineColor, lineWidth: tile.isSelected ? 4 : 1)
                 )
                 .frame(height: 64)
 
@@ -137,7 +155,7 @@ struct TileView: View {
                 .font(.title2.weight(.bold))
                 .foregroundColor(.white)
         }
-        .shadow(color: tile.isSelected ? Color.blue.opacity(0.6) : Color.black.opacity(0.2), radius: tile.isSelected ? 18 : 8, x: 0, y: tile.isSelected ? 12 : 4)
+        .shadow(color: glowColor, radius: tile.isSelected ? 18 : 8, x: 0, y: tile.isSelected ? 12 : 4)
     }
 
     private var tileBackground: LinearGradient {
@@ -145,9 +163,66 @@ struct TileView: View {
             return LinearGradient(colors: [Color.green.opacity(0.4), Color.green.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
         } else if tile.isSelected {
             return LinearGradient(colors: [Color.blue.opacity(0.5), Color.cyan.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
+        } else if isBestMove {
+            return LinearGradient(colors: [Color.purple.opacity(0.5), Color.blue.opacity(0.5)], startPoint: .topLeading, endPoint: .bottomTrailing)
         } else {
             return LinearGradient(colors: [Color.white.opacity(0.08), Color.white.opacity(0.04)], startPoint: .topLeading, endPoint: .bottomTrailing)
         }
+    }
+
+    private var outlineColor: Color {
+        if tile.isSelected {
+            return .white.opacity(0.85)
+        } else if isHinted {
+            return Color.cyan.opacity(0.7)
+        } else {
+            return Color.white.opacity(0.2)
+        }
+    }
+
+    private var glowColor: Color {
+        if tile.isSelected {
+            return Color.blue.opacity(0.6)
+        } else if isHinted {
+            return Color.cyan.opacity(0.5)
+        } else {
+            return Color.black.opacity(0.2)
+        }
+    }
+}
+
+struct SelectionActionBar: View {
+    @EnvironmentObject private var store: GameStore
+    let isCompact: Bool
+
+    private var hasSelection: Bool { !store.selectedTiles.isEmpty }
+    private var canConfirm: Bool { GameLogic.validateSelection(store.selectedTiles, roll: store.pendingRoll) }
+
+    var body: some View {
+        Group {
+            if isCompact {
+                VStack(spacing: 12) { buttons }
+            } else {
+                HStack(spacing: 12) { buttons }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var buttons: some View {
+        Button(action: store.confirmSelection) {
+            Label("Confirm", systemImage: "checkmark.circle.fill")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(NeonButtonStyle())
+        .disabled(!canConfirm)
+
+        Button(action: store.cancelSelection) {
+            Label("Clear", systemImage: "xmark.circle")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(SecondaryButtonStyle())
+        .disabled(!hasSelection)
     }
 }
 
@@ -160,7 +235,7 @@ struct ProgressCardsView: View {
             ("Tiles Shut", "\(store.shutTilesCount)/\(store.tiles.count)"),
             ("Selected Total", "\(store.selectedTiles.reduce(0) { $0 + $1.value })"),
             ("Roll Combos", "\(GameLogic.availableCombinations(for: store.pendingRoll, tiles: store.tiles).count)"),
-            ("Dice Total", "\(store.pendingRoll.total)")
+            ("Progress", String(format: "%.0f%%", store.progressPercent))
         ]
     }
 

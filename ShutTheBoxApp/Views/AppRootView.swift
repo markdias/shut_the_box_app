@@ -20,7 +20,7 @@ struct AppRootView: View {
 
                 ScrollView {
                     VStack(spacing: 24) {
-                        if store.options.enableLearningGames && store.showLearning {
+                        if store.options.showLearningGames && store.showLearning {
                             LearningGameBoardView()
                         } else {
                             GameBoardView(isCompact: isCompact)
@@ -30,11 +30,9 @@ struct AppRootView: View {
                             .environmentObject(store)
                             .padding(.horizontal)
 
-                        if store.options.showHeaderDetails {
-                            HistoryView()
-                                .environmentObject(store)
-                                .padding(.horizontal)
-                        }
+                        HistoryView()
+                            .environmentObject(store)
+                            .padding(.horizontal)
                     }
                     .padding(.bottom, 24)
                 }
@@ -47,7 +45,7 @@ struct AppRootView: View {
             .sheet(isPresented: $store.showHistory) { HistorySheetView().environmentObject(store) }
             .sheet(isPresented: $store.showInstructions) { InstructionsView().environmentObject(store) }
             .sheet(isPresented: $store.showWinners) { WinnersView().environmentObject(store) }
-            .sheet(isPresented: Binding(get: { store.options.enableLearningGames && store.showLearning }, set: { value in store.showLearning = value })) {
+            .sheet(isPresented: Binding(get: { store.options.showLearningGames && store.showLearning }, set: { value in store.showLearning = value })) {
                 LearningGameSheetView().environmentObject(store)
             }
         }

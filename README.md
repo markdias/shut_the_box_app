@@ -26,16 +26,71 @@ ShutTheBoxApp/
 
 > **Note:** The repository now includes a fully-configured Xcode 15 project and shared scheme so you can open the workspace and build immediately without manual setup.
 
-## Features
+## Core gameplay flow
 
-- **Complete gameplay loop** – roll dice, toggle tiles, confirm moves, and automatically detect round wins.
-- **Bust detection** – unplayable rolls automatically score the remaining tiles so rounds conclude without manual bookkeeping.
-- **Persistent state** – user defaults snapshots keep options, players, rounds, and previous winners between launches.
-- **Neon UI theme** – layered gradients, glowing buttons, and responsive grids inspired by the React version, with a centralized theme manager updating accent colours app-wide.
-- **Adaptive layout** – dice tray controls stack on compact iPhone widths while progress cards become a horizontal carousel for a comfortable handheld experience.
-- **Learning mini-games** – switcher for Shapes, Dice, Dots, Math, and Word practice activities.
-- **Score export** – share sheet exports player scores as JSON, mirroring the browser download flow.
-- **Hot-seat controls** – manage multiple players, toggle hints, and adjust scoring modes from the native settings sheet.
+- **Setup** – Configure options, add players, and keep the scoreboard from previous sessions thanks to `UserDefaults` persistence that mirrors the original web client's localStorage snapshot.
+- **Turn loop** – Rolling automatically picks two dice unless the one-die rule allows a single die and kick-starts new rounds on the first tap. Players can build multi-tile selections whose totals must match the roll; the confirmation bar only lights up for valid sums to prevent accidental closures on touch devices.
+- **Round resolution** – Rounds end once all players have no legal moves. The winner modal lists every player, highlights ties, and honours the instant-win-on-shut rule for zero scores.
+- **Instructions overlay** – "How to Play" opens an accessible modal that summarises the rules and assists new players without leaving the app.
+
+## Rules & scoring configuration
+
+All configuration knobs live inside the Settings panel:
+
+| Option | Values | Behaviour |
+| --- | --- | --- |
+| Highest tile | 1–9, 1–10, 1–12 (cheat code unlocks 1–56) | Regenerates the tile strip outside active rounds. Hidden code `madness` enables the 56-tile stress test. |
+| One-die rule | After top tiles shut · When remainder < 6 · Never | Controls when the UI offers a single die. Inline help text explains each choice. |
+| Scoring mode | Lowest remainder · Cumulative target race · Instant win | Adapts scorekeeping. Target mode enables a configurable goal; instant mode forces instant-win behaviour. |
+| Instant win on shut | Toggle | Awards victory immediately when a player clears the board (also implied by instant scoring). |
+| Require confirmation | Toggle | Adds a confirmation bar before tiles close to prevent mis-taps. |
+| Auto-retry on failure | Toggle | When paired with auto-play, restarts runs automatically after round summaries. |
+| Show header details | Toggle | Expands the neon header with status chips for round, hints, and previous winners. |
+| Show code tools | Toggle | Reveals an inline cheat-code text field for `full`, `madness`, and `takeover`. |
+| Theme | Neon glow · Matrix grid · Classic wood · Tabletop felt | Applies SwiftUI themes and updates the app tint. |
+| Show learning games | Toggle | Swaps the main board for the mini-game hub when active. |
+
+Cheat codes perform extra tasks:
+
+- `full` – Enables perfect-roll rigging for instant wins.
+- `madness` – Raises `maxTile` to 56 for giant boards.
+- `takeover` – Activates visible auto-play (following best-move hints), enables auto-retry, and restarts the round hands-free.
+
+Double tapping tile 12 also primes a secret forced double-six on the next roll.
+
+## Player management & history
+
+- Add or remove hot-seat players, rename them inline, and toggle per-player hints during setup or live play.
+- Track each player's last score, cumulative totals (for target mode), and unfinished turns inside the roster.
+- The History panel records every roll, move, bust, and celebration with colourful icons. It persists across launches alongside scores, rounds, previous winners, and the selected theme under the key `shut-the-box:scores`.
+- The "Save Scores" header action exports the persisted snapshot as `shut-the-box-scores.json`, including the round number, current phase, totals, and active theme.
+
+## Assistive & automated play
+
+- Global hints illuminate legal tiles. Players can toggle hints individually, while the best-move highlight recommends the strongest combination.
+- Auto-play follows the best-move path, shows a dismissible banner, and cooperates with the auto-retry toggle for kiosk demos.
+- Pending-turn toasts, restart countdowns, and end-turn acknowledgements keep multi-player sessions coordinated.
+- Winner and instructions modals summarise the round and provide quick rule refreshers for new players.
+
+## Learning mini games
+
+Enable "Show learning games" and use the **More Games** button to swap out the main board. Each mini game reuses the app chrome and supports touch or mouse input:
+
+- **Word sound builder** – Choose 2–6 letter words, tap tiles to hear phonetic playback, and optionally switch to the premium voice fallback. The system speech engine provides instant audio when offline.
+- **Shape explorer** – Render regular polygons, custom quadrilaterals, circles, and ellipses. Tap glowing vertices to count corners; the UI tracks totals and supplies fun facts.
+- **Dice dot detective** – Pick 1–6 dice, predict the total with tile-style buttons, then reveal animated dice for immediate feedback.
+- **Secret dot flash** – Flash up to 36 non-overlapping dots for subitising practice. Adjustable difficulty controls dot ranges and flash timing.
+- **Math mixer** – Generate arithmetic equations (addition, subtraction, multiplication, division) with Starter and harder difficulty levels; reveal answers inline once checked.
+
+The active learning game persists so returning to the board is a single tap.
+
+## User interface & responsiveness
+
+- The mobile header condenses into a menu and status toggle while desktop keeps settings and history buttons inline.
+- Dice tray animations react to rolls and surface one-die guidance inline.
+- Status chips display round, phase, active player, roster size, previous winners, and hint status when enabled.
+- Progress cards show tiles closed, selected totals, available combinations, and completion percentage, while toast notifications announce next turns.
+- Multiple SwiftUI themes deliver neon, grid, wood, and felt aesthetics with a single toggle.
 
 ## Getting started
 

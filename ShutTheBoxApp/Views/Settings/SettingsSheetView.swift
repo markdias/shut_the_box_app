@@ -16,56 +16,83 @@ struct SettingsSheetView: View {
                     }
                 }
 
-                Section(header: Text("Tile Range")) {
-                    Stepper(value: Binding(get: { store.options.tileRange.upperBound }, set: { newValue in
-                        store.updateOptions { options in
-                            options.tileRange = store.options.tileRange.lowerBound...max(store.options.tileRange.lowerBound, newValue)
+                Section(header: Text("Tiles")) {
+                    Picker("Highest tile", selection: Binding(get: { store.options.maxTile }, set: { newValue in
+                        store.updateOptions { $0.maxTile = newValue }
+                    })) {
+                        Text("1 – 9").tag(9)
+                        Text("1 – 10").tag(10)
+                        Text("1 – 12").tag(12)
+                        if store.options.allowsMadness {
+                            Text("1 – 56").tag(56)
                         }
-                        store.tiles = GameLogic.initialTiles(range: store.options.tileRange)
-                    }), in: 9...24) {
-                        Text("Tiles: 1-\(store.options.tileRange.upperBound)")
                     }
+                    .pickerStyle(.segmented)
                 }
 
                 Section(header: Text("Rules")) {
-                    Picker("One-Die Rule", selection: Binding(get: { store.options.oneDieRule }, set: { newValue in
+                    Picker("One-die rule", selection: Binding(get: { store.options.oneDieRule }, set: { newValue in
                         store.updateOptions { $0.oneDieRule = newValue }
                     })) {
                         ForEach(OneDieRule.allCases) { rule in
-                            Text(rule.title).tag(rule)
+                            VStack(alignment: .leading) {
+                                Text(rule.title)
+                                Text(rule.helpText)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .tag(rule)
                         }
                     }
 
-                    Picker("Scoring Mode", selection: Binding(get: { store.options.scoringMode }, set: { newValue in
+                    Picker("Scoring mode", selection: Binding(get: { store.options.scoringMode }, set: { newValue in
                         store.updateOptions { $0.scoringMode = newValue }
                     })) {
                         ForEach(ScoringMode.allCases) { mode in
-                            Text(mode.title).tag(mode)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(mode.title)
+                                Text(mode.subtitle)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .tag(mode)
+                        }
+                    }
+                    .pickerStyle(.inline)
+
+                    if store.options.scoringMode == .targetRace {
+                        Stepper(value: Binding(get: { store.options.targetGoal }, set: { newValue in
+                            store.updateOptions { $0.targetGoal = max(10, newValue) }
+                        }), in: 10...300, step: 5) {
+                            Text("Target goal: \(store.options.targetGoal)")
                         }
                     }
 
-                    Toggle("Require Confirmation", isOn: Binding(get: { store.options.requireConfirmation }, set: { newValue in
+                    Toggle("Require confirmation", isOn: Binding(get: { store.options.requireConfirmation }, set: { newValue in
                         store.updateOptions { $0.requireConfirmation = newValue }
                     }))
 
-                    Toggle("Instant Win", isOn: Binding(get: { store.options.instantWin }, set: { newValue in
-                        store.updateOptions { $0.instantWin = newValue }
+                    Toggle("Instant win on shut", isOn: Binding(get: { store.options.instantWinOnShut }, set: { newValue in
+                        store.updateOptions { $0.instantWinOnShut = newValue }
                     }))
-                }
+                    .disabled(store.options.scoringMode == .instantWin)
 
-                Section(header: Text("Learning")) {
-                    Toggle("Enable Learning Games", isOn: Binding(get: { store.options.enableLearningGames }, set: { value in
-                        store.updateOptions { $0.enableLearningGames = value }
-                    }))
-
-                    Toggle("Auto Retry", isOn: Binding(get: { store.options.autoRetry }, set: { value in
+                    Toggle("Auto-retry on failure", isOn: Binding(get: { store.options.autoRetry }, set: { value in
                         store.updateOptions { $0.autoRetry = value }
                     }))
                 }
 
-                Section(header: Text("Header")) {
-                    Toggle("Show Details", isOn: Binding(get: { store.options.showHeaderDetails }, set: { value in
+                Section(header: Text("Interface")) {
+                    Toggle("Show header details", isOn: Binding(get: { store.options.showHeaderDetails }, set: { value in
                         store.updateOptions { $0.showHeaderDetails = value }
+                    }))
+
+                    Toggle("Show learning games", isOn: Binding(get: { store.options.showLearningGames }, set: { value in
+                        store.updateOptions { $0.showLearningGames = value }
+                    }))
+
+                    Toggle("Show code tools", isOn: Binding(get: { store.options.showCodeTools }, set: { value in
+                        store.updateOptions { $0.showCodeTools = value }
                     }))
                 }
 
