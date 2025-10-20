@@ -36,7 +36,7 @@ struct DiceTrayView: View {
                 .font(.title3.weight(.semibold))
                 .foregroundColor(.white)
 
-            Button(action: store.rollDice) {
+            Button(action: { store.rollDice() }) {
                 HStack(spacing: 16) {
                     DiceView(value: store.pendingRoll.first, size: isCompact ? 72 : 88)
                     DiceView(value: store.pendingRoll.second, size: isCompact ? 72 : 88)
