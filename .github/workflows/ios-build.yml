@@ -26,4 +26,6 @@ jobs:
             -scheme ShutTheBoxApp \
             -destination 'generic/platform=iOS' \
             CODE_SIGNING_ALLOWED=NO \
+            ENABLE_PREVIEWS=NO \
+            ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOLS=NO \
             build
