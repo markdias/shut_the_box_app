@@ -87,7 +87,17 @@ struct AppRootView: View {
             ) {
                 WinnersView().environmentObject(store)
             }
-            .sheet(isPresented: Binding(get: { store.options.showLearningGames && store.showLearning }, set: { value in store.showLearning = value })) {
+            .sheet(
+                isPresented: Binding(
+                    get: { store.options.showLearningGames && store.showLearning },
+                    set: { value in
+                        let current = store.options.showLearningGames && store.showLearning
+                        guard value != current else { return }
+                        if value { guard store.options.showLearningGames else { return } }
+                        store.toggleLearning()
+                    }
+                )
+            ) {
                 LearningGameSheetView().environmentObject(store)
             }
         }
