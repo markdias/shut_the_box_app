@@ -51,9 +51,42 @@ struct AppRootView: View {
                     .environmentObject(store)
                     .environmentObject(themeManager)
             }
-            .sheet(isPresented: $store.showHistory) { HistorySheetView().environmentObject(store) }
-            .sheet(isPresented: $store.showInstructions) { InstructionsView().environmentObject(store) }
-            .sheet(isPresented: $store.showWinners) { WinnersView().environmentObject(store) }
+            .sheet(
+                isPresented: Binding(
+                    get: { store.showHistory },
+                    set: { value in
+                        if value != store.showHistory {
+                            store.toggleHistory()
+                        }
+                    }
+                )
+            ) {
+                HistorySheetView().environmentObject(store)
+            }
+            .sheet(
+                isPresented: Binding(
+                    get: { store.showInstructions },
+                    set: { value in
+                        if value != store.showInstructions {
+                            store.toggleInstructions()
+                        }
+                    }
+                )
+            ) {
+                InstructionsView().environmentObject(store)
+            }
+            .sheet(
+                isPresented: Binding(
+                    get: { store.showWinners },
+                    set: { value in
+                        if value != store.showWinners {
+                            store.toggleWinners()
+                        }
+                    }
+                )
+            ) {
+                WinnersView().environmentObject(store)
+            }
             .sheet(isPresented: Binding(get: { store.options.showLearningGames && store.showLearning }, set: { value in store.showLearning = value })) {
                 LearningGameSheetView().environmentObject(store)
             }
