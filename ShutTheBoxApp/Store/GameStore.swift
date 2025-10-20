@@ -352,13 +352,14 @@ final class GameStore: ObservableObject {
         let summary = WinnerSummary(playerName: player.name, score: 0, tilesShut: tilesClosed)
         winners = [summary]
         previousWinner = summary
-        showWinners = true
+        let shouldShowPopup = players.count > 1
+        showWinners = shouldShowPopup
         phase = .roundComplete
         round += 1
         currentRoundScores.removeAll()
         currentPlayerIndex = 0
         pendingRoll = DiceRoll()
-        scheduleAutoRetryIfNeeded()
+        scheduleAutoRetryIfNeeded(showingPopup: shouldShowPopup, didShut: true)
         Task { await persistSnapshot() }
     }
 
@@ -379,15 +380,20 @@ final class GameStore: ObservableObject {
         let summaries = roundSummaries()
         winners = summaries
         previousWinner = summaries.first
-        showWinners = true
-        scheduleAutoRetryIfNeeded()
+        let shouldShowPopup = players.count > 1
+        showWinners = shouldShowPopup
+        let singlePlayerShutBox = players.count == 1 && (summaries.first?.score ?? 0) == 0
+        scheduleAutoRetryIfNeeded(showingPopup: shouldShowPopup, didShut: singlePlayerShutBox)
         currentRoundScores.removeAll()
         pendingRoll = DiceRoll()
         Task { await persistSnapshot() }
     }
 
-    private func scheduleAutoRetryIfNeeded() {
+    private func scheduleAutoRetryIfNeeded(showingPopup: Bool, didShut: Bool) {
+        guard !showingPopup else { return }
         guard options.autoRetry || autoPlayEnabled else { return }
+        guard players.count == 1 else { return }
+        guard didShut else { return }
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 1_200_000_000)
             startGame()
