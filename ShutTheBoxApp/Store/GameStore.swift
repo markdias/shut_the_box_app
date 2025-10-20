@@ -6,7 +6,7 @@ final class GameStore: ObservableObject {
     // Published state
     @Published private(set) var options: GameOptions
     @Published private(set) var players: [Player]
-    @Published private(set) var tiles: [Tile]
+    @Published var tiles: [Tile]
     @Published private(set) var phase: GamePhase
     @Published private(set) var round: Int
     @Published private(set) var currentPlayerIndex: Int
@@ -14,12 +14,12 @@ final class GameStore: ObservableObject {
     @Published private(set) var turnLogs: [TurnLog]
     @Published private(set) var winners: [WinnerSummary]
     @Published private(set) var previousWinner: WinnerSummary?
-    @Published private(set) var showSettings: Bool = false
-    @Published private(set) var showHistory: Bool = false
+    @Published var showSettings: Bool = false
+    @Published var showHistory: Bool = false
     @Published private(set) var showHints: Bool = false
-    @Published private(set) var showLearning: Bool = false
-    @Published private(set) var showInstructions: Bool = false
-    @Published private(set) var showWinners: Bool = false
+    @Published var showLearning: Bool = false
+    @Published var showInstructions: Bool = false
+    @Published var showWinners: Bool = false
 
     // Derived computed values
     var activePlayer: Player? { players[safe: currentPlayerIndex] }
