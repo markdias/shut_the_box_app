@@ -26,10 +26,6 @@ struct AppRootView: View {
                             GameBoardView(isCompact: isCompact)
                         }
 
-                        PlayersView()
-                            .environmentObject(store)
-                            .padding(.horizontal)
-
                         HistoryView()
                             .environmentObject(store)
                             .padding(.horizontal)

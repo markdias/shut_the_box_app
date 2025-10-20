@@ -12,10 +12,9 @@ ShutTheBoxApp/
 ├── Utilities/              # Dice logic, combination search, persistence, and theming helpers
 ├── Views/
 │   ├── Header/             # Header status, action bar, and export controls
-│   ├── Board/              # Dice tray, tile grid, and progress cards
-│   ├── Players/            # Player management hot-seat tools
+│   ├── Board/              # Dice tray, tile grid, progress cards, and end-turn bar
 │   ├── History/            # Turn log panels and sheet presentation
-│   ├── Settings/           # Settings form with theme/rule configuration
+│   ├── Settings/           # Settings form with theme/rule/player configuration
 │   ├── Learning/           # Learning game switcher and mini-game content
 │   └── Modals/             # Instruction and winner summaries
 ├── Resources/
@@ -59,7 +58,7 @@ Double tapping tile 12 also primes a secret forced double-six on the next roll.
 
 ## Player management & history
 
-- Add or remove hot-seat players, rename them inline, and toggle per-player hints during setup or live play.
+- Manage the hot-seat roster from **Settings → Players**, adding or removing participants, renaming them inline, and toggling per-player hints.
 - Track each player's last score, cumulative totals (for target mode), and unfinished turns inside the roster.
 - The History panel records every roll, move, bust, and celebration with colourful icons. It persists across launches alongside scores, rounds, previous winners, and the selected theme under the key `shut-the-box:scores`.
 - The "Save Scores" header action exports the persisted snapshot as `shut-the-box-scores.json`, including the round number, current phase, totals, and active theme.

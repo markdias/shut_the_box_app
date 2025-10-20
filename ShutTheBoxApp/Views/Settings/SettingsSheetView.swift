@@ -16,6 +16,8 @@ struct SettingsSheetView: View {
                     }
                 }
 
+                PlayerSettingsSection()
+
                 Section(header: Text("Tiles")) {
                     Picker("Highest tile", selection: Binding(get: { store.options.maxTile }, set: { newValue in
                         store.updateOptions { $0.maxTile = newValue }
