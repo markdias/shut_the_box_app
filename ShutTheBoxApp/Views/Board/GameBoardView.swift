@@ -68,50 +68,37 @@ struct DiceTrayView: View {
     let isCompact: Bool
 
     var body: some View {
-        VStack(spacing: 12) {
-            if showBoxNotShutBanner {
-                Text("Box not shut")
-                    .font(.callout.weight(.semibold))
-                    .foregroundColor(.white)
-                    .padding(.vertical, 8)
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Color.red.opacity(0.35))
-                            .shadow(color: Color.red.opacity(0.5), radius: 8, x: 0, y: 4)
-                    )
-                    .padding(.bottom, 4)
-            }
-
-            Text(store.phase == .setup ? "Start Game" : "Current Roll")
+        VStack(spacing: 16) {
+            Text(trayTitle)
                 .font(.title3.weight(.semibold))
                 .foregroundColor(.white)
 
-            Button(action: { store.rollDice() }) {
-                HStack(spacing: 16) {
-                    DiceView(value: store.pendingRoll.first, size: isCompact ? 96 : 120)
-                    DiceView(value: store.pendingRoll.second, size: isCompact ? 96 : 120)
+            ZStack(alignment: .top) {
+                if showBoxNotShutBanner {
+                    DidNotShutBanner()
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
-                .contentShape(Rectangle())
+
+                Button(action: { store.rollDice() }) {
+                    HStack(spacing: 16) {
+                        DiceView(value: store.pendingRoll.first, size: isCompact ? 96 : 120)
+                        DiceView(value: store.pendingRoll.second, size: isCompact ? 96 : 120)
+                    }
+                    .padding(.top, bannerClearance)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!canRoll)
+                .opacity(canRoll ? 1 : 0.6)
+                .accessibilityLabel(rollAccessibilityLabel)
+                .accessibilityAddTraits(.isButton)
             }
-            .buttonStyle(.plain)
-            .disabled(!canRoll)
-            .opacity(canRoll ? 1 : 0.6)
-            .accessibilityLabel(rollAccessibilityLabel)
-            .accessibilityAddTraits(.isButton)
+            .animation(.easeInOut(duration: 0.25), value: showBoxNotShutBanner)
 
             if store.phase == .setup || store.phase == .playing {
-                Text(canRoll ? "Tap the dice to roll." : "Select tiles totalling \(store.pendingRoll.total) to continue.")
+                Text(helperMessage)
                     .font(.callout)
                     .foregroundColor(.white.opacity(0.7))
-            }
-
-            if store.phase != .playing {
-                Button(action: store.startGame) {
-                    Label("Start Game", systemImage: "play.fill")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(NeonButtonStyle())
             }
 
             if store.pendingRoll.total > 0 {
@@ -133,6 +120,27 @@ struct DiceTrayView: View {
         }
     }
 
+    private var trayTitle: String {
+        switch store.phase {
+        case .setup:
+            return "Roll the Dice to Begin"
+        case .playing:
+            return "Roll the Dice"
+        case .roundComplete:
+            return "Round Complete"
+        }
+    }
+
+    private var helperMessage: String {
+        if canRoll {
+            if store.phase == .setup {
+                return "Tap the dice to roll and start the game."
+            }
+            return "Tap the dice to roll again."
+        }
+        return "Select tiles totalling \(store.pendingRoll.total) to continue."
+    }
+
     private var rollAccessibilityLabel: Text {
         if canRoll {
             if store.phase == .setup {
@@ -148,6 +156,41 @@ struct DiceTrayView: View {
         guard store.players.count == 1 else { return false }
         guard store.phase == .roundComplete else { return false }
         return (store.players.first?.lastScore ?? 0) > 0
+    }
+
+    private var bannerClearance: CGFloat { isCompact ? 44 : 52 }
+}
+
+private struct DidNotShutBanner: View {
+    var body: some View {
+        Label {
+            Text("Did not shut the box")
+                .textCase(.uppercase)
+        } icon: {
+            Image(systemName: "exclamationmark.triangle.fill")
+        }
+        .font(.footnote.weight(.semibold))
+        .padding(.horizontal, 18)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [Color(red: 0.98, green: 0.36, blue: 0.42), Color(red: 0.88, green: 0.13, blue: 0.35)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.white.opacity(0.24), lineWidth: 1)
+                )
+        )
+        .foregroundColor(.white)
+        .shadow(color: Color.red.opacity(0.45), radius: 16, x: 0, y: 10)
+        .padding(.horizontal, 4)
+        .allowsHitTesting(false)
     }
 }
 
