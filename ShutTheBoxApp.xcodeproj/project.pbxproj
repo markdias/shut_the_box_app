@@ -1,0 +1,473 @@
+// !$*UTF8*$!
+{
+archiveVersion = 1;
+classes = {};
+objectVersion = 56;
+objects = {
+
+/* Begin PBXBuildFile section */
+6A0B20012C5001F500A1F0E4 /* ShutTheBoxAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B20112C5001F500A1F0E4 /* ShutTheBoxAppApp.swift */; };
+6A0B20022C5001F500A1F0E4 /* GameModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B20122C5001F500A1F0E4 /* GameModels.swift */; };
+6A0B20032C5001F500A1F0E4 /* GameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B20132C5001F500A1F0E4 /* GameStore.swift */; };
+6A0B20042C5001F500A1F0E4 /* CombinationGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B20142C5001F500A1F0E4 /* CombinationGenerator.swift */; };
+6A0B20052C5001F500A1F0E4 /* GameLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B20152C5001F500A1F0E4 /* GameLogic.swift */; };
+6A0B20062C5001F500A1F0E4 /* StorageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B20162C5001F500A1F0E4 /* StorageProvider.swift */; };
+6A0B20072C5001F500A1F0E4 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B20172C5001F500A1F0E4 /* ThemeManager.swift */; };
+6A0B20082C5001F500A1F0E4 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B20182C5001F500A1F0E4 /* AppRootView.swift */; };
+6A0B20092C5001F500A1F0E4 /* GameBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B20192C5001F500A1F0E4 /* GameBoardView.swift */; };
+6A0B200A2C5001F500A1F0E4 /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B201A2C5001F500A1F0E4 /* HeaderView.swift */; };
+6A0B200B2C5001F500A1F0E4 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B201B2C5001F500A1F0E4 /* HistoryView.swift */; };
+6A0B200C2C5001F500A1F0E4 /* LearningGameBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B201C2C5001F500A1F0E4 /* LearningGameBoardView.swift */; };
+6A0B200D2C5001F500A1F0E4 /* InstructionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B201D2C5001F500A1F0E4 /* InstructionsView.swift */; };
+6A0B200E2C5001F500A1F0E4 /* WinnersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B201E2C5001F500A1F0E4 /* WinnersView.swift */; };
+6A0B200F2C5001F500A1F0E4 /* PlayersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B201F2C5001F500A1F0E4 /* PlayersView.swift */; };
+6A0B20102C5001F500A1F0E4 /* SettingsSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0B20202C5001F500A1F0E4 /* SettingsSheetView.swift */; };
+6A0B20252C5001F500A1F0E4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6A0B20242C5001F500A1F0E4 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+6A0B20112C5001F500A1F0E4 /* ShutTheBoxAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShutTheBoxAppApp.swift; sourceTree = "<group>"; };
+6A0B20122C5001F500A1F0E4 /* GameModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModels.swift; sourceTree = "<group>"; };
+6A0B20132C5001F500A1F0E4 /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
+6A0B20142C5001F500A1F0E4 /* CombinationGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombinationGenerator.swift; sourceTree = "<group>"; };
+6A0B20152C5001F500A1F0E4 /* GameLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameLogic.swift; sourceTree = "<group>"; };
+6A0B20162C5001F500A1F0E4 /* StorageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageProvider.swift; sourceTree = "<group>"; };
+6A0B20172C5001F500A1F0E4 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
+6A0B20182C5001F500A1F0E4 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
+6A0B20192C5001F500A1F0E4 /* GameBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBoardView.swift; sourceTree = "<group>"; };
+6A0B201A2C5001F500A1F0E4 /* HeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
+6A0B201B2C5001F500A1F0E4 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+6A0B201C2C5001F500A1F0E4 /* LearningGameBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningGameBoardView.swift; sourceTree = "<group>"; };
+6A0B201D2C5001F500A1F0E4 /* InstructionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstructionsView.swift; sourceTree = "<group>"; };
+6A0B201E2C5001F500A1F0E4 /* WinnersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WinnersView.swift; sourceTree = "<group>"; };
+6A0B201F2C5001F500A1F0E4 /* PlayersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayersView.swift; sourceTree = "<group>"; };
+6A0B20202C5001F500A1F0E4 /* SettingsSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSheetView.swift; sourceTree = "<group>"; };
+6A0B20242C5001F500A1F0E4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+6A0B20262C5001F500A1F0E4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+6A0B20402C5001F500A1F0E4 /* ShutTheBoxApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShutTheBoxApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+6A0B20002C5001F500A1F0E4 /* Frameworks */ = {
+isa = PBXFrameworksBuildPhase;
+buildActionMask = 2147483647;
+files = (
+);
+runOnlyForDeploymentPostprocessing = 0;
+};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+6A0B20212C5001F500A1F0E4 = {
+isa = PBXGroup;
+children = (
+6A0B20232C5001F500A1F0E4 /* ShutTheBoxApp */,
+6A0B20412C5001F500A1F0E4 /* Products */,
+);
+sourceTree = "<group>";
+};
+6A0B20412C5001F500A1F0E4 /* Products */ = {
+isa = PBXGroup;
+children = (
+6A0B20402C5001F500A1F0E4 /* ShutTheBoxApp.app */,
+);
+name = Products;
+sourceTree = "<group>";
+};
+6A0B20232C5001F500A1F0E4 /* ShutTheBoxApp */ = {
+isa = PBXGroup;
+children = (
+6A0B20112C5001F500A1F0E4 /* ShutTheBoxAppApp.swift */,
+6A0B20272C5001F500A1F0E4 /* Models */,
+6A0B20282C5001F500A1F0E4 /* Store */,
+6A0B20292C5001F500A1F0E4 /* Utilities */,
+6A0B202A2C5001F500A1F0E4 /* Views */,
+6A0B202F2C5001F500A1F0E4 /* Resources */,
+);
+path = ShutTheBoxApp;
+sourceTree = "<group>";
+};
+6A0B20272C5001F500A1F0E4 /* Models */ = {
+isa = PBXGroup;
+children = (
+6A0B20122C5001F500A1F0E4 /* GameModels.swift */,
+);
+path = Models;
+sourceTree = "<group>";
+};
+6A0B20282C5001F500A1F0E4 /* Store */ = {
+isa = PBXGroup;
+children = (
+6A0B20132C5001F500A1F0E4 /* GameStore.swift */,
+);
+path = Store;
+sourceTree = "<group>";
+};
+6A0B20292C5001F500A1F0E4 /* Utilities */ = {
+isa = PBXGroup;
+children = (
+6A0B20142C5001F500A1F0E4 /* CombinationGenerator.swift */,
+6A0B20152C5001F500A1F0E4 /* GameLogic.swift */,
+6A0B20162C5001F500A1F0E4 /* StorageProvider.swift */,
+6A0B20172C5001F500A1F0E4 /* ThemeManager.swift */,
+);
+path = Utilities;
+sourceTree = "<group>";
+};
+6A0B202A2C5001F500A1F0E4 /* Views */ = {
+isa = PBXGroup;
+children = (
+6A0B20182C5001F500A1F0E4 /* AppRootView.swift */,
+6A0B202B2C5001F500A1F0E4 /* Board */,
+6A0B202C2C5001F500A1F0E4 /* Header */,
+6A0B202D2C5001F500A1F0E4 /* History */,
+6A0B202E2C5001F500A1F0E4 /* Learning */,
+6A0B20302C5001F500A1F0E4 /* Modals */,
+6A0B20312C5001F500A1F0E4 /* Players */,
+6A0B20322C5001F500A1F0E4 /* Settings */,
+);
+path = Views;
+sourceTree = "<group>";
+};
+6A0B202B2C5001F500A1F0E4 /* Board */ = {
+isa = PBXGroup;
+children = (
+6A0B20192C5001F500A1F0E4 /* GameBoardView.swift */,
+);
+path = Board;
+sourceTree = "<group>";
+};
+6A0B202C2C5001F500A1F0E4 /* Header */ = {
+isa = PBXGroup;
+children = (
+6A0B201A2C5001F500A1F0E4 /* HeaderView.swift */,
+);
+path = Header;
+sourceTree = "<group>";
+};
+6A0B202D2C5001F500A1F0E4 /* History */ = {
+isa = PBXGroup;
+children = (
+6A0B201B2C5001F500A1F0E4 /* HistoryView.swift */,
+);
+path = History;
+sourceTree = "<group>";
+};
+6A0B202E2C5001F500A1F0E4 /* Learning */ = {
+isa = PBXGroup;
+children = (
+6A0B201C2C5001F500A1F0E4 /* LearningGameBoardView.swift */,
+);
+path = Learning;
+sourceTree = "<group>";
+};
+6A0B20302C5001F500A1F0E4 /* Modals */ = {
+isa = PBXGroup;
+children = (
+6A0B201D2C5001F500A1F0E4 /* InstructionsView.swift */,
+6A0B201E2C5001F500A1F0E4 /* WinnersView.swift */,
+);
+path = Modals;
+sourceTree = "<group>";
+};
+6A0B20312C5001F500A1F0E4 /* Players */ = {
+isa = PBXGroup;
+children = (
+6A0B201F2C5001F500A1F0E4 /* PlayersView.swift */,
+);
+path = Players;
+sourceTree = "<group>";
+};
+6A0B20322C5001F500A1F0E4 /* Settings */ = {
+isa = PBXGroup;
+children = (
+6A0B20202C5001F500A1F0E4 /* SettingsSheetView.swift */,
+);
+path = Settings;
+sourceTree = "<group>";
+};
+6A0B202F2C5001F500A1F0E4 /* Resources */ = {
+isa = PBXGroup;
+children = (
+6A0B20242C5001F500A1F0E4 /* Assets.xcassets */,
+6A0B20262C5001F500A1F0E4 /* Info.plist */,
+);
+path = Resources;
+sourceTree = "<group>";
+};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+6A0B200B2C5001F500A1F0F4 /* ShutTheBoxApp */ = {
+isa = PBXNativeTarget;
+buildConfigurationList = 6A0B20372C5001F500A1F0E4 /* Build configuration list for PBXNativeTarget "ShutTheBoxApp" */;
+buildPhases = (
+6A0B1FFF2C5001F500A1F0E4 /* Sources */,
+6A0B20002C5001F500A1F0E4 /* Frameworks */,
+6A0B20422C5001F500A1F0E4 /* Resources */,
+);
+buildRules = (
+);
+dependencies = (
+);
+name = ShutTheBoxApp;
+productName = ShutTheBoxApp;
+productReference = 6A0B20402C5001F500A1F0E4 /* ShutTheBoxApp.app */;
+productType = "com.apple.product-type.application";
+};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+6A0B200A2C5001F500A1F0E4 /* Project object */ = {
+isa = PBXProject;
+attributes = {
+BuildIndependentTargetsInParallel = YES;
+LastSwiftUpdateCheck = 1520;
+LastUpgradeCheck = 1520;
+TargetAttributes = {
+6A0B200B2C5001F500A1F0F4 = {
+CreatedOnToolsVersion = 15.2;
+};
+};
+};
+buildConfigurationList = 6A0B20342C5001F500A1F0E4 /* Build configuration list for PBXProject "ShutTheBoxApp" */;
+compatibilityVersion = "Xcode 15.0";
+developmentRegion = en;
+hasScannedForEncodings = 0;
+knownRegions = (
+en,
+Base,
+);
+mainGroup = 6A0B20212C5001F500A1F0E4;
+productRefGroup = 6A0B20412C5001F500A1F0E4 /* Products */;
+projectDirPath = "";
+projectRoot = "";
+targets = (
+6A0B200B2C5001F500A1F0F4 /* ShutTheBoxApp */,
+);
+};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+6A0B20422C5001F500A1F0E4 /* Resources */ = {
+isa = PBXResourcesBuildPhase;
+buildActionMask = 2147483647;
+files = (
+6A0B20252C5001F500A1F0E4 /* Assets.xcassets in Resources */,
+);
+runOnlyForDeploymentPostprocessing = 0;
+};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+6A0B1FFF2C5001F500A1F0E4 /* Sources */ = {
+isa = PBXSourcesBuildPhase;
+buildActionMask = 2147483647;
+files = (
+6A0B20032C5001F500A1F0E4 /* GameStore.swift in Sources */,
+6A0B20082C5001F500A1F0E4 /* AppRootView.swift in Sources */,
+6A0B20092C5001F500A1F0E4 /* GameBoardView.swift in Sources */,
+6A0B20072C5001F500A1F0E4 /* ThemeManager.swift in Sources */,
+6A0B20052C5001F500A1F0E4 /* GameLogic.swift in Sources */,
+6A0B20062C5001F500A1F0E4 /* StorageProvider.swift in Sources */,
+6A0B200B2C5001F500A1F0E4 /* HistoryView.swift in Sources */,
+6A0B20042C5001F500A1F0E4 /* CombinationGenerator.swift in Sources */,
+6A0B20022C5001F500A1F0E4 /* GameModels.swift in Sources */,
+6A0B200A2C5001F500A1F0E4 /* HeaderView.swift in Sources */,
+6A0B200E2C5001F500A1F0E4 /* WinnersView.swift in Sources */,
+6A0B200D2C5001F500A1F0E4 /* InstructionsView.swift in Sources */,
+6A0B20012C5001F500A1F0E4 /* ShutTheBoxAppApp.swift in Sources */,
+6A0B200F2C5001F500A1F0E4 /* PlayersView.swift in Sources */,
+6A0B200C2C5001F500A1F0E4 /* LearningGameBoardView.swift in Sources */,
+6A0B20102C5001F500A1F0E4 /* SettingsSheetView.swift in Sources */,
+);
+runOnlyForDeploymentPostprocessing = 0;
+};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+6A0B20352C5001F500A1F0E4 /* Debug */ = {
+isa = XCBuildConfiguration;
+buildSettings = {
+ALWAYS_SEARCH_USER_PATHS = NO;
+CLANG_ANALYZER_NONNULL = YES;
+CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+CLANG_ENABLE_MODULES = YES;
+CLANG_ENABLE_OBJC_ARC = YES;
+CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+CLANG_WARN_BOOL_CONVERSION = YES;
+CLANG_WARN_COMMA = YES;
+CLANG_WARN_CONSTANT_CONVERSION = YES;
+CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+CLANG_WARN_EMPTY_BODY = YES;
+CLANG_WARN_ENUM_CONVERSION = YES;
+CLANG_WARN_INFINITE_RECURSION = YES;
+CLANG_WARN_INT_CONVERSION = YES;
+CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+CLANG_WARN_STRICT_PROTOTYPES = YES;
+CLANG_WARN_SUSPICIOUS_MOVE = YES;
+CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+CODE_SIGN_STYLE = Automatic;
+COPY_PHASE_STRIP = NO;
+DEBUG_INFORMATION_FORMAT = dwarf;
+ENABLE_NS_ASSERTIONS = YES;
+ENABLE_STRICT_OBJC_MSGSEND = YES;
+ENABLE_TESTABILITY = YES;
+GCC_C_LANGUAGE_STANDARD = gnu17;
+GCC_DYNAMIC_NO_PIC = NO;
+GCC_NO_COMMON_BLOCKS = YES;
+GCC_PREPROCESSOR_DEFINITIONS = (
+"DEBUG=1",
+"$(inherited)",
+);
+GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+GCC_WARN_UNDECLARED_SELECTOR = YES;
+GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+GCC_WARN_UNUSED_FUNCTION = YES;
+GCC_WARN_UNUSED_VARIABLE = YES;
+IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+MTL_FAST_MATH = YES;
+ONLY_ACTIVE_ARCH = YES;
+SDKROOT = iphoneos;
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+SWIFT_COMPILATION_MODE = singlefile;
+SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+SWIFT_VERSION = 5.0;
+TARGETED_DEVICE_FAMILY = "1,2";
+VALIDATE_PRODUCT = YES;
+};
+name = Debug;
+};
+6A0B20362C5001F500A1F0E4 /* Release */ = {
+isa = XCBuildConfiguration;
+buildSettings = {
+ALWAYS_SEARCH_USER_PATHS = NO;
+CLANG_ANALYZER_NONNULL = YES;
+CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+CLANG_ENABLE_MODULES = YES;
+CLANG_ENABLE_OBJC_ARC = YES;
+CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+CLANG_WARN_BOOL_CONVERSION = YES;
+CLANG_WARN_COMMA = YES;
+CLANG_WARN_CONSTANT_CONVERSION = YES;
+CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+CLANG_WARN_EMPTY_BODY = YES;
+CLANG_WARN_ENUM_CONVERSION = YES;
+CLANG_WARN_INFINITE_RECURSION = YES;
+CLANG_WARN_INT_CONVERSION = YES;
+CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+CLANG_WARN_STRICT_PROTOTYPES = YES;
+CLANG_WARN_SUSPICIOUS_MOVE = YES;
+CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+CODE_SIGN_STYLE = Automatic;
+COPY_PHASE_STRIP = NO;
+DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+ENABLE_NS_ASSERTIONS = NO;
+ENABLE_STRICT_OBJC_MSGSEND = YES;
+GCC_C_LANGUAGE_STANDARD = gnu17;
+GCC_NO_COMMON_BLOCKS = YES;
+GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+GCC_WARN_UNDECLARED_SELECTOR = YES;
+GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+GCC_WARN_UNUSED_FUNCTION = YES;
+GCC_WARN_UNUSED_VARIABLE = YES;
+IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+MTL_ENABLE_DEBUG_INFO = NO;
+MTL_FAST_MATH = YES;
+SDKROOT = iphoneos;
+SWIFT_COMPILATION_MODE = wholemodule;
+SWIFT_OPTIMIZATION_LEVEL = "-O";
+SWIFT_VERSION = 5.0;
+TARGETED_DEVICE_FAMILY = "1,2";
+};
+name = Release;
+};
+6A0B20382C5001F500A1F0E4 /* Debug */ = {
+isa = XCBuildConfiguration;
+buildSettings = {
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+CODE_SIGN_STYLE = Automatic;
+CURRENT_PROJECT_VERSION = 1;
+DEVELOPMENT_ASSET_PATHS = "";
+DEVELOPMENT_TEAM = "";
+GENERATE_INFOPLIST_FILE = NO;
+INFOPLIST_FILE = ShutTheBoxApp/Resources/Info.plist;
+IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+MARKETING_VERSION = 1.0;
+PRODUCT_BUNDLE_IDENTIFIER = com.example.ShutTheBoxApp;
+PRODUCT_NAME = "$(TARGET_NAME)";
+SUPPORTS_MACCATALYST = NO;
+SWIFT_EMIT_LOC_STRINGS = YES;
+SWIFT_VERSION = 5.0;
+TARGETED_DEVICE_FAMILY = "1,2";
+};
+name = Debug;
+};
+6A0B20392C5001F500A1F0E4 /* Release */ = {
+isa = XCBuildConfiguration;
+buildSettings = {
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+CODE_SIGN_STYLE = Automatic;
+CURRENT_PROJECT_VERSION = 1;
+DEVELOPMENT_ASSET_PATHS = "";
+DEVELOPMENT_TEAM = "";
+GENERATE_INFOPLIST_FILE = NO;
+INFOPLIST_FILE = ShutTheBoxApp/Resources/Info.plist;
+IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+MARKETING_VERSION = 1.0;
+PRODUCT_BUNDLE_IDENTIFIER = com.example.ShutTheBoxApp;
+PRODUCT_NAME = "$(TARGET_NAME)";
+SUPPORTS_MACCATALYST = NO;
+SWIFT_EMIT_LOC_STRINGS = YES;
+SWIFT_VERSION = 5.0;
+TARGETED_DEVICE_FAMILY = "1,2";
+};
+name = Release;
+};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+6A0B20342C5001F500A1F0E4 /* Build configuration list for PBXProject "ShutTheBoxApp" */ = {
+isa = XCConfigurationList;
+buildConfigurations = (
+6A0B20352C5001F500A1F0E4 /* Debug */,
+6A0B20362C5001F500A1F0E4 /* Release */,
+);
+defaultConfigurationIsVisible = 0;
+defaultConfigurationName = Release;
+};
+6A0B20372C5001F500A1F0E4 /* Build configuration list for PBXNativeTarget "ShutTheBoxApp" */ = {
+isa = XCConfigurationList;
+buildConfigurations = (
+6A0B20382C5001F500A1F0E4 /* Debug */,
+6A0B20392C5001F500A1F0E4 /* Release */,
+);
+defaultConfigurationIsVisible = 0;
+defaultConfigurationName = Release;
+};
+/* End XCConfigurationList section */
+
+};
+rootObject = 6A0B200A2C5001F500A1F0E4 /* Project object */;
+}
