@@ -68,10 +68,6 @@ struct SettingsSheetView: View {
                         }
                     }
 
-                    Toggle("Require confirmation", isOn: Binding(get: { store.options.requireConfirmation }, set: { newValue in
-                        store.updateOptions { $0.requireConfirmation = newValue }
-                    }))
-
                     Toggle("Instant win on shut", isOn: Binding(get: { store.options.instantWinOnShut }, set: { newValue in
                         store.updateOptions { $0.instantWinOnShut = newValue }
                     }))

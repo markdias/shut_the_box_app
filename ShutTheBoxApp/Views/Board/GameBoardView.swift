@@ -8,9 +8,6 @@ struct GameBoardView: View {
         VStack(spacing: 24) {
             DiceTrayView(isCompact: isCompact)
             TileGridView(isCompact: isCompact)
-            if store.options.requireConfirmation {
-                SelectionActionBar(isCompact: isCompact)
-            }
             ProgressCardsView(isCompact: isCompact)
         }
         .padding()
@@ -36,9 +33,23 @@ struct DiceTrayView: View {
                 .font(.title3.weight(.semibold))
                 .foregroundColor(.white)
 
-            HStack(spacing: 16) {
-                DiceView(value: store.pendingRoll.first, size: isCompact ? 72 : 88)
-                DiceView(value: store.pendingRoll.second, size: isCompact ? 72 : 88)
+            Button(action: { store.rollDice() }) {
+                HStack(spacing: 16) {
+                    DiceView(value: store.pendingRoll.first, size: isCompact ? 96 : 120)
+                    DiceView(value: store.pendingRoll.second, size: isCompact ? 96 : 120)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!canRoll)
+            .opacity(canRoll ? 1 : 0.6)
+            .accessibilityLabel(rollAccessibilityLabel)
+            .accessibilityAddTraits(.isButton)
+
+            if store.phase == .setup || store.phase == .playing {
+                Text(canRoll ? "Tap the dice to roll." : "Select tiles totalling \(store.pendingRoll.total) to continue.")
+                    .font(.callout)
+                    .foregroundColor(.white.opacity(0.7))
             }
 
             Group {
@@ -63,23 +74,43 @@ struct DiceTrayView: View {
 
     @ViewBuilder
     private var actionButtons: some View {
-        Button(action: store.startGame) {
-            Label("Start Game", systemImage: "play.fill")
-                .frame(maxWidth: .infinity)
+        if store.phase != .playing {
+            Button(action: store.startGame) {
+                Label("Start Game", systemImage: "play.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(NeonButtonStyle())
         }
-        .buttonStyle(NeonButtonStyle())
 
-        Button(action: { store.rollDice() }) {
-            Label(store.pendingRoll.total == 0 ? "Roll to Begin" : "Roll Again", systemImage: "die.face.5")
-                .frame(maxWidth: .infinity)
+        if store.phase == .playing {
+            Button(action: store.endTurn) {
+                Label("End Turn", systemImage: "flag.checkered")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(SecondaryButtonStyle())
         }
-        .buttonStyle(NeonButtonStyle())
+    }
 
-        Button(action: store.endTurn) {
-            Label("End Turn", systemImage: "flag.checkered")
-                .frame(maxWidth: .infinity)
+    private var canRoll: Bool {
+        switch store.phase {
+        case .setup:
+            return true
+        case .playing:
+            return store.pendingRoll.total == 0 && store.selectedTiles.isEmpty
+        case .roundComplete:
+            return false
         }
-        .buttonStyle(SecondaryButtonStyle())
+    }
+
+    private var rollAccessibilityLabel: Text {
+        if canRoll {
+            if store.phase == .setup {
+                return Text("Tap to start the game by rolling the dice")
+            } else {
+                return Text("Tap to roll the dice again")
+            }
+        }
+        return Text("Resolve the current selection before rolling again")
     }
 }
 
@@ -94,24 +125,30 @@ struct DiceView: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.12))
+            RoundedRectangle(cornerRadius: 24)
+                .fill(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.08), Color.white.opacity(0.02)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .frame(width: size, height: size)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(Color.white.opacity(0.28), lineWidth: 1.5)
                 )
 
             if let value, (1...6).contains(value) {
                 DicePipView(value: value)
-                    .frame(width: size * 0.68, height: size * 0.68)
+                    .frame(width: size * 0.7, height: size * 0.7)
             } else {
                 Text("?")
                     .font(.system(size: size * 0.48, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
             }
         }
-        .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
+        .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 14)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
     }
@@ -140,13 +177,14 @@ private struct DicePipView: View {
     var body: some View {
         GeometryReader { proxy in
             let size = min(proxy.size.width, proxy.size.height)
-            let pipSize = size * 0.18
+            let pipSize = size * 0.2
             let positions = Self.pipPositions[value, default: []]
             ZStack {
                 ForEach(Array(positions.enumerated()), id: \.offset) { entry in
                     let position = entry.element
                     Circle()
                         .fill(Color.white)
+                        .shadow(color: .black.opacity(0.25), radius: pipSize * 0.4, x: 0, y: pipSize * 0.2)
                         .frame(width: pipSize, height: pipSize)
                         .position(
                             x: proxy.size.width * position.x,
@@ -210,9 +248,9 @@ struct TileView: View {
         if tile.isShut {
             return LinearGradient(colors: [Color.green.opacity(0.4), Color.green.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
         } else if tile.isSelected {
-            return LinearGradient(colors: [Color.blue.opacity(0.5), Color.cyan.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            return LinearGradient(colors: [Color.green.opacity(0.65), Color.green.opacity(0.45)], startPoint: .topLeading, endPoint: .bottomTrailing)
         } else if isBestMove {
-            return LinearGradient(colors: [Color.purple.opacity(0.5), Color.blue.opacity(0.5)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            return LinearGradient(colors: [Color.cyan.opacity(0.45), Color.blue.opacity(0.45)], startPoint: .topLeading, endPoint: .bottomTrailing)
         } else {
             return LinearGradient(colors: [Color.white.opacity(0.08), Color.white.opacity(0.04)], startPoint: .topLeading, endPoint: .bottomTrailing)
         }
@@ -220,7 +258,7 @@ struct TileView: View {
 
     private var outlineColor: Color {
         if tile.isSelected {
-            return .white.opacity(0.85)
+            return Color.green.opacity(0.9)
         } else if isHinted {
             return Color.cyan.opacity(0.7)
         } else {
@@ -230,47 +268,12 @@ struct TileView: View {
 
     private var glowColor: Color {
         if tile.isSelected {
-            return Color.blue.opacity(0.6)
+            return Color.green.opacity(0.55)
         } else if isHinted {
             return Color.cyan.opacity(0.5)
         } else {
             return Color.black.opacity(0.2)
         }
-    }
-}
-
-struct SelectionActionBar: View {
-    @EnvironmentObject private var store: GameStore
-    let isCompact: Bool
-
-    private var hasSelection: Bool { !store.selectedTiles.isEmpty }
-    private var canConfirm: Bool { GameLogic.validateSelection(store.selectedTiles, roll: store.pendingRoll) }
-
-    var body: some View {
-        Group {
-            if isCompact {
-                VStack(spacing: 12) { buttons }
-            } else {
-                HStack(spacing: 12) { buttons }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var buttons: some View {
-        Button(action: store.confirmSelection) {
-            Label("Confirm", systemImage: "checkmark.circle.fill")
-                .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(NeonButtonStyle())
-        .disabled(!canConfirm)
-
-        Button(action: store.cancelSelection) {
-            Label("Clear", systemImage: "xmark.circle")
-                .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(SecondaryButtonStyle())
-        .disabled(!hasSelection)
     }
 }
 

@@ -14,33 +14,72 @@ body {
   min-height: 100vh;
   margin: 0;
 }
-.wrapper {
+.tray {
   display: flex;
-  gap: 3rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+}
+.dice-row {
+  display: flex;
+  gap: 2rem;
 }
 .die {
-  width: 160px;
-  height: 160px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  width: 186px;
+  height: 186px;
+  border-radius: 32px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  padding: 32px;
+  padding: 36px;
+  cursor: pointer;
+  transition: transform 120ms ease;
 }
 .pip {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   background: #ffffff;
   border-radius: 50%;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
   justify-self: center;
   align-self: center;
 }
 .pip.hidden {
   visibility: hidden;
+}
+.die:active {
+  transform: scale(0.97);
+}
+.hint {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+.buttons {
+  display: flex;
+  gap: 1rem;
+}
+.button {
+  padding: 0.85rem 1.8rem;
+  border-radius: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+.button.primary {
+  background: linear-gradient(135deg, rgba(142, 68, 173, 0.85), rgba(52, 152, 219, 0.85));
+  color: white;
+  box-shadow: 0 12px 24px rgba(94, 60, 133, 0.45);
+}
+.button.secondary {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
 }
 .caption {
   text-align: center;
@@ -51,31 +90,38 @@ body {
 </head>
 <body>
 <div>
-  <div class="wrapper">
-    <div class="die" aria-label="Five">
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
+  <div class="tray">
+    <div class="dice-row">
+      <div class="die" aria-label="Five">
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+      </div>
+      <div class="die" aria-label="Six">
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+      </div>
     </div>
-    <div class="die" aria-label="Six">
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
+    <div class="hint">Tap the dice to roll. Valid selections close automatically and invite the next roll.</div>
+    <div class="buttons">
+      <div class="button primary">Start Game</div>
+      <div class="button secondary">End Turn</div>
     </div>
   </div>
-  <div class="caption">Classic pip dice styling now matches the in-app SwiftUI design.</div>
+  <div class="caption">Classic pip dice styling now matches the in-app SwiftUI design with larger dice and brighter pips.</div>
 </div>
 </body>
 </html>

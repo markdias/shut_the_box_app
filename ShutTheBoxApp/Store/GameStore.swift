@@ -218,7 +218,7 @@ final class GameStore: ObservableObject {
         guard let idx = tiles.firstIndex(where: { $0.id == tile.id }) else { return }
 
         tiles[idx].isSelected.toggle()
-        if !options.requireConfirmation && GameLogic.validateSelection(selectedTiles, roll: pendingRoll) {
+        if GameLogic.validateSelection(selectedTiles, roll: pendingRoll) {
             confirmSelection()
         }
     }
@@ -421,6 +421,9 @@ final class GameStore: ObservableObject {
         }
         if !options.cheatCodes.contains(.madness) {
             options.maxTile = min(options.maxTile, 12)
+        }
+        if options.requireConfirmation {
+            options.requireConfirmation = false
         }
     }
 

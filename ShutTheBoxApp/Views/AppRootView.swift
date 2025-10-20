@@ -37,15 +37,67 @@ struct AppRootView: View {
                     .padding(.bottom, 24)
                 }
             }
-            .sheet(isPresented: $store.showSettings) {
+            .sheet(
+                isPresented: Binding(
+                    get: { store.showSettings },
+                    set: { value in
+                        if value != store.showSettings {
+                            store.toggleSettings()
+                        }
+                    }
+                )
+            ) {
                 SettingsSheetView()
                     .environmentObject(store)
                     .environmentObject(themeManager)
             }
-            .sheet(isPresented: $store.showHistory) { HistorySheetView().environmentObject(store) }
-            .sheet(isPresented: $store.showInstructions) { InstructionsView().environmentObject(store) }
-            .sheet(isPresented: $store.showWinners) { WinnersView().environmentObject(store) }
-            .sheet(isPresented: Binding(get: { store.options.showLearningGames && store.showLearning }, set: { value in store.showLearning = value })) {
+            .sheet(
+                isPresented: Binding(
+                    get: { store.showHistory },
+                    set: { value in
+                        if value != store.showHistory {
+                            store.toggleHistory()
+                        }
+                    }
+                )
+            ) {
+                HistorySheetView().environmentObject(store)
+            }
+            .sheet(
+                isPresented: Binding(
+                    get: { store.showInstructions },
+                    set: { value in
+                        if value != store.showInstructions {
+                            store.toggleInstructions()
+                        }
+                    }
+                )
+            ) {
+                InstructionsView().environmentObject(store)
+            }
+            .sheet(
+                isPresented: Binding(
+                    get: { store.showWinners },
+                    set: { value in
+                        if value != store.showWinners {
+                            store.toggleWinners()
+                        }
+                    }
+                )
+            ) {
+                WinnersView().environmentObject(store)
+            }
+            .sheet(
+                isPresented: Binding(
+                    get: { store.options.showLearningGames && store.showLearning },
+                    set: { value in
+                        let current = store.options.showLearningGames && store.showLearning
+                        guard value != current else { return }
+                        if value { guard store.options.showLearningGames else { return } }
+                        store.toggleLearning()
+                    }
+                )
+            ) {
                 LearningGameSheetView().environmentObject(store)
             }
         }
