@@ -4,6 +4,7 @@ struct StorageProvider {
     enum Key: String {
         case snapshot = "shut-the-box:scores"
         case theme = "shut-the-box:theme"
+        case hintsMigration = "shut-the-box:hints-migrated"
     }
 
     private let defaults = UserDefaults.standard
@@ -17,6 +18,10 @@ struct StorageProvider {
         defaults.set(value, forKey: key.rawValue)
     }
 
+    func persist(_ value: Bool, key: Key) {
+        defaults.set(value, forKey: key.rawValue)
+    }
+
     func restore<T: Decodable>(key: Key) -> T? {
         guard let data = defaults.data(forKey: key.rawValue) else { return nil }
         return try? JSONDecoder().decode(T.self, from: data)
@@ -24,5 +29,10 @@ struct StorageProvider {
 
     func restoreString(key: Key) -> String? {
         defaults.string(forKey: key.rawValue)
+    }
+
+    func restoreBool(key: Key) -> Bool? {
+        guard defaults.object(forKey: key.rawValue) != nil else { return nil }
+        return defaults.bool(forKey: key.rawValue)
     }
 }

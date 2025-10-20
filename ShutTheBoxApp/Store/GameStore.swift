@@ -43,6 +43,7 @@ final class GameStore: ObservableObject {
     private let storage = StorageProvider()
     private var riggedRoll: DiceRoll?
     private var currentRoundScores: [UUID: RoundScore]
+    private var hasMigratedHintPreferences: Bool = false
 
     private enum TurnResolution {
         case bust
@@ -52,7 +53,10 @@ final class GameStore: ObservableObject {
     }
 
     init() {
-        if let snapshot: GameSettingsSnapshot = storage.restore(key: .snapshot) {
+        let restoredSnapshot: GameSettingsSnapshot? = storage.restore(key: .snapshot)
+        self.hasMigratedHintPreferences = storage.restoreBool(key: .hintsMigration) ?? false
+
+        if let snapshot = restoredSnapshot {
             self.options = snapshot.options
             self.players = snapshot.players
             self.tiles = snapshot.tiles.isEmpty ? GameLogic.initialTiles(range: snapshot.options.tileRange) : snapshot.tiles
@@ -78,6 +82,7 @@ final class GameStore: ObservableObject {
             self.currentRoundScores = [:]
         }
 
+        migrateHintPreferencesIfNeeded(restoredSnapshot: restoredSnapshot)
         normalizeOptions()
         refreshBestMove()
         Task { await persistSnapshot() }
@@ -90,6 +95,9 @@ final class GameStore: ObservableObject {
 
     func toggleHints() {
         showHints.toggle()
+        if showHints {
+            ensureHintsEnabledForLegacyPlayers()
+        }
         Task { await persistSnapshot() }
     }
 
@@ -476,6 +484,36 @@ final class GameStore: ObservableObject {
             currentRoundScores: currentRoundScores
         )
         storage.persist(snapshot, key: .snapshot)
+    }
+
+    private func migrateHintPreferencesIfNeeded(restoredSnapshot: GameSettingsSnapshot?) {
+        guard !hasMigratedHintPreferences else { return }
+        defer {
+            hasMigratedHintPreferences = true
+            storage.persist(true, key: .hintsMigration)
+        }
+        guard restoredSnapshot != nil else { return }
+        guard !players.isEmpty else { return }
+        guard !players.contains(where: { $0.hintsEnabled }) else { return }
+        for idx in players.indices {
+            players[idx].hintsEnabled = true
+        }
+    }
+
+    private func ensureHintsEnabledForLegacyPlayers() {
+        guard !hasMigratedHintPreferences else { return }
+        guard !players.isEmpty else {
+            hasMigratedHintPreferences = true
+            storage.persist(true, key: .hintsMigration)
+            return
+        }
+        if !players.contains(where: { $0.hintsEnabled }) {
+            for idx in players.indices {
+                players[idx].hintsEnabled = true
+            }
+        }
+        hasMigratedHintPreferences = true
+        storage.persist(true, key: .hintsMigration)
     }
 }
 
