@@ -49,14 +49,15 @@ private struct AttentionContainer<Content: View>: View {
     @ViewBuilder var content: Content
 
     private var glowColor: Color { Color.green.opacity(0.8) }
+    private let glowPadding: CGFloat = 8
 
     var body: some View {
         content
-            .overlay(alignment: .center) {
-                RoundedRectangle(cornerRadius: cornerRadius)
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .inset(by: -glowPadding)
                     .stroke(glowColor, lineWidth: isActive ? 3 : 0)
                     .shadow(color: glowColor.opacity(isActive ? 0.6 : 0), radius: isActive ? 18 : 0)
-                    .padding(isActive ? -8 : 0)
                     .allowsHitTesting(false)
                     .animation(.easeInOut(duration: 0.2), value: isActive)
             }
@@ -95,8 +96,8 @@ struct DiceTrayView: View {
             }
             .animation(.easeInOut(duration: 0.25), value: showBoxNotShutBanner)
 
-            if store.phase == .setup || store.phase == .playing {
-                Text(helperMessage)
+            if let helperText = nextActionMessage {
+                Text(helperText)
                     .font(.callout)
                     .foregroundColor(.white.opacity(0.7))
             }
@@ -116,7 +117,7 @@ struct DiceTrayView: View {
         case .playing:
             return store.pendingRoll.total == 0 && store.selectedTiles.isEmpty
         case .roundComplete:
-            return false
+            return !store.showWinners
         }
     }
 
@@ -127,29 +128,47 @@ struct DiceTrayView: View {
         case .playing:
             return "Roll the Dice"
         case .roundComplete:
-            return "Round Complete"
+            return canRoll ? "Start the Next Round" : "Round Complete"
         }
     }
 
-    private var helperMessage: String {
-        if canRoll {
-            if store.phase == .setup {
-                return "Tap the dice to roll and start the game."
+    private var nextActionMessage: String? {
+        switch store.phase {
+        case .setup:
+            return "Tap the dice to roll and start the game."
+        case .playing:
+            return canRoll
+                ? "Tap the dice to roll again."
+                : "Select tiles totalling \(store.pendingRoll.total) to continue."
+        case .roundComplete:
+            if canRoll {
+                return "Tap the dice to begin the next round."
             }
-            return "Tap the dice to roll again."
+            if store.showWinners {
+                return "Review the results, then close the summary to continue."
+            }
+            return nil
         }
-        return "Select tiles totalling \(store.pendingRoll.total) to continue."
     }
 
     private var rollAccessibilityLabel: Text {
-        if canRoll {
-            if store.phase == .setup {
-                return Text("Tap to start the game by rolling the dice")
-            } else {
+        switch store.phase {
+        case .setup:
+            return Text("Tap to start the game by rolling the dice")
+        case .playing:
+            if canRoll {
                 return Text("Tap to roll the dice again")
             }
+            return Text("Resolve the current selection before rolling again")
+        case .roundComplete:
+            if canRoll {
+                return Text("Tap to start the next round")
+            }
+            if store.showWinners {
+                return Text("Close the results summary before starting the next round")
+            }
+            return Text("Wait for the next round to begin")
         }
-        return Text("Resolve the current selection before rolling again")
     }
 
     private var showBoxNotShutBanner: Bool {

@@ -29,7 +29,7 @@ ShutTheBoxApp/
 
 - **Setup** – Configure options, add players, and keep the scoreboard from previous sessions thanks to `UserDefaults` persistence that mirrors the original web client's localStorage snapshot.
 - **Turn loop** – Rolling automatically picks two dice unless the one-die rule allows a single die and kick-starts new rounds on the first tap. Players build multi-tile selections whose totals must match the roll; valid sums now close the tiles instantly so the dice prompt the next roll without a confirmation bar.
-- **Round resolution** – Rounds end once all players have no legal moves. The winner modal lists every player, highlights ties, and honours the instant-win-on-shut rule for zero scores. Solo practice now swaps the modal for a "Did not shut the box" status banner above the dice whenever tiles remain open.
+- **Round resolution** – Rounds end once all players have no legal moves. The winner modal lists every player, highlights ties, and honours the instant-win-on-shut rule for zero scores. Solo practice now swaps the modal for a "Did not shut the box" status banner above the dice whenever tiles remain open, and a quick tap on the dice launches the next round once you're ready.
 - **Instructions overlay** – "How to Play" opens an accessible modal that summarises the rules and assists new players without leaving the app.
 
 ## Rules & scoring configuration
