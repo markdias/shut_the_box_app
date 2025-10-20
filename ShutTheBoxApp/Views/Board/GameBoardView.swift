@@ -9,6 +9,7 @@ struct GameBoardView: View {
             DiceTrayView(isCompact: isCompact)
             TileGridView(isCompact: isCompact)
             ProgressCardsView(isCompact: isCompact)
+            EndTurnBar()
         }
         .padding()
         .background(
@@ -52,16 +53,12 @@ struct DiceTrayView: View {
                     .foregroundColor(.white.opacity(0.7))
             }
 
-            Group {
-                if isCompact {
-                    VStack(spacing: 12) {
-                        actionButtons
-                    }
-                } else {
-                    HStack(spacing: 12) {
-                        actionButtons
-                    }
+            if store.phase != .playing {
+                Button(action: store.startGame) {
+                    Label("Start Game", systemImage: "play.fill")
+                        .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(NeonButtonStyle())
             }
 
             if store.pendingRoll.total > 0 {
@@ -69,25 +66,6 @@ struct DiceTrayView: View {
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.6))
             }
-        }
-    }
-
-    @ViewBuilder
-    private var actionButtons: some View {
-        if store.phase != .playing {
-            Button(action: store.startGame) {
-                Label("Start Game", systemImage: "play.fill")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(NeonButtonStyle())
-        }
-
-        if store.phase == .playing {
-            Button(action: store.endTurn) {
-                Label("End Turn", systemImage: "flag.checkered")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(SecondaryButtonStyle())
         }
     }
 
@@ -293,13 +271,10 @@ struct ProgressCardsView: View {
     var body: some View {
         Group {
             if isCompact {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(cards, id: \.title) { card in
-                            ProgressCard(title: card.title, value: card.value, width: 160)
-                        }
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
+                    ForEach(cards, id: \.title) { card in
+                        ProgressCard(title: card.title, value: card.value)
                     }
-                    .padding(.horizontal, 2)
                 }
             } else {
                 HStack(spacing: 16) {
@@ -315,7 +290,6 @@ struct ProgressCardsView: View {
 struct ProgressCard: View {
     let title: String
     let value: String
-    var width: CGFloat? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -327,10 +301,24 @@ struct ProgressCard: View {
                 .foregroundColor(.white)
         }
         .padding()
-        .frame(width: width, alignment: .leading)
-        .frame(maxWidth: width == nil ? .infinity : width, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
+private struct EndTurnBar: View {
+    @EnvironmentObject private var store: GameStore
+
+    var body: some View {
+        if store.phase == .playing {
+            Button(action: store.endTurn) {
+                Label("End Turn", systemImage: "flag.checkered")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(SecondaryButtonStyle())
+            .padding(.top, 8)
+        }
     }
 }
 

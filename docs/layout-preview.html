@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Shut the Box Layout Preview</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #101225, #060712 60%);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .board {
+      width: min(920px, 92vw);
+      min-height: 620px;
+      border-radius: 32px;
+      padding: 40px 48px 56px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.35);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 32px;
+    }
+
+    .dice {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .die {
+      flex: 1;
+      aspect-ratio: 1;
+      border-radius: 24px;
+      display: grid;
+      place-items: center;
+      font-size: clamp(56px, 8vw, 72px);
+      font-weight: 800;
+      background: linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.05));
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.18), 0 30px 50px rgba(0,0,0,0.4);
+    }
+
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+      gap: 16px;
+    }
+
+    .tile {
+      height: 60px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(140, 255, 171, 0.65), rgba(61, 217, 120, 0.48));
+      color: #0f2114;
+      font-size: 24px;
+      font-weight: 700;
+      box-shadow: 0 18px 30px rgba(35, 255, 160, 0.25);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      padding: 20px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 12px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.66);
+    }
+
+    .card strong {
+      font-size: 28px;
+    }
+
+    .end-turn {
+      display: block;
+      text-align: center;
+      padding: 18px 24px;
+      border-radius: 20px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      background: rgba(255, 255, 255, 0.14);
+      text-decoration: none;
+      color: #fff;
+      box-shadow: 0 16px 28px rgba(0, 0, 0, 0.28);
+    }
+
+    .end-turn span {
+      opacity: 0.72;
+      font-size: 13px;
+      display: block;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <section class="dice">
+      <div class="die">2</div>
+      <div class="die">5</div>
+    </section>
+
+    <section class="tiles">
+      <div class="tile">1</div>
+      <div class="tile">2</div>
+      <div class="tile">3</div>
+      <div class="tile">4</div>
+      <div class="tile">5</div>
+      <div class="tile">6</div>
+      <div class="tile">7</div>
+      <div class="tile">8</div>
+      <div class="tile">9</div>
+      <div class="tile">10</div>
+      <div class="tile">11</div>
+      <div class="tile">12</div>
+    </section>
+
+    <section class="cards">
+      <article class="card">
+        <h3>Tiles Shut</h3>
+        <strong>6 / 12</strong>
+      </article>
+      <article class="card">
+        <h3>Selected Total</h3>
+        <strong>9</strong>
+      </article>
+      <article class="card">
+        <h3>Roll Combos</h3>
+        <strong>3</strong>
+      </article>
+      <article class="card">
+        <h3>Progress</h3>
+        <strong>42%</strong>
+      </article>
+    </section>
+
+    <a class="end-turn" href="#">
+      End Turn
+      <span>Finish the current player's turn</span>
+    </a>
+  </main>
+</body>
+</html>
