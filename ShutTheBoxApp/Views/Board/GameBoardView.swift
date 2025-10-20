@@ -6,8 +6,12 @@ struct GameBoardView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            DiceTrayView(isCompact: isCompact)
-            TileGridView(isCompact: isCompact)
+            AttentionContainer(isActive: diceNeedsAttention, cornerRadius: isCompact ? 24 : 28) {
+                DiceTrayView(isCompact: isCompact)
+            }
+            AttentionContainer(isActive: tilesNeedAttention, cornerRadius: isCompact ? 20 : 24) {
+                TileGridView(isCompact: isCompact)
+            }
             ProgressCardsView(isCompact: isCompact)
             EndTurnBar()
         }
@@ -24,12 +28,61 @@ struct GameBoardView: View {
     }
 }
 
+private extension GameBoardView {
+    var diceNeedsAttention: Bool {
+        switch store.phase {
+        case .setup, .roundComplete:
+            return true
+        case .playing:
+            return store.pendingRoll.total == 0 && store.selectedTiles.isEmpty
+        }
+    }
+
+    var tilesNeedAttention: Bool {
+        store.phase == .playing && store.pendingRoll.total > 0
+    }
+}
+
+private struct AttentionContainer<Content: View>: View {
+    let isActive: Bool
+    let cornerRadius: CGFloat
+    @ViewBuilder var content: Content
+
+    private var glowColor: Color { Color.green.opacity(0.8) }
+
+    var body: some View {
+        content
+            .overlay(alignment: .center) {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(glowColor, lineWidth: isActive ? 3 : 0)
+                    .shadow(color: glowColor.opacity(isActive ? 0.6 : 0), radius: isActive ? 18 : 0)
+                    .padding(isActive ? -8 : 0)
+                    .allowsHitTesting(false)
+                    .animation(.easeInOut(duration: 0.2), value: isActive)
+            }
+    }
+}
+
 struct DiceTrayView: View {
     @EnvironmentObject private var store: GameStore
     let isCompact: Bool
 
     var body: some View {
         VStack(spacing: 12) {
+            if showBoxNotShutBanner {
+                Text("Box not shut")
+                    .font(.callout.weight(.semibold))
+                    .foregroundColor(.white)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color.red.opacity(0.35))
+                            .shadow(color: Color.red.opacity(0.5), radius: 8, x: 0, y: 4)
+                    )
+                    .padding(.bottom, 4)
+            }
+
             Text(store.phase == .setup ? "Start Game" : "Current Roll")
                 .font(.title3.weight(.semibold))
                 .foregroundColor(.white)
@@ -89,6 +142,12 @@ struct DiceTrayView: View {
             }
         }
         return Text("Resolve the current selection before rolling again")
+    }
+
+    private var showBoxNotShutBanner: Bool {
+        guard store.players.count == 1 else { return false }
+        guard store.phase == .roundComplete else { return false }
+        return (store.players.first?.lastScore ?? 0) > 0
     }
 }
 
