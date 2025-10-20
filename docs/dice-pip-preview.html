@@ -25,25 +25,26 @@ body {
   gap: 2rem;
 }
 .die {
-  width: 160px;
-  height: 160px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  width: 186px;
+  height: 186px;
+  border-radius: 32px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  padding: 32px;
+  padding: 36px;
   cursor: pointer;
   transition: transform 120ms ease;
 }
 .pip {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   background: #ffffff;
   border-radius: 50%;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
   justify-self: center;
   align-self: center;
 }
@@ -114,13 +115,13 @@ body {
         <span class="pip"></span>
       </div>
     </div>
-    <div class="hint">Tap the dice to roll. Select tiles totalling 11 to keep the turn alive.</div>
+    <div class="hint">Tap the dice to roll. Valid selections close automatically and invite the next roll.</div>
     <div class="buttons">
       <div class="button primary">Start Game</div>
       <div class="button secondary">End Turn</div>
     </div>
   </div>
-  <div class="caption">Classic pip dice styling now matches the in-app SwiftUI design.</div>
+  <div class="caption">Classic pip dice styling now matches the in-app SwiftUI design with larger dice and brighter pips.</div>
 </div>
 </body>
 </html>

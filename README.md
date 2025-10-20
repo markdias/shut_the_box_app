@@ -29,7 +29,7 @@ ShutTheBoxApp/
 ## Core gameplay flow
 
 - **Setup** – Configure options, add players, and keep the scoreboard from previous sessions thanks to `UserDefaults` persistence that mirrors the original web client's localStorage snapshot.
-- **Turn loop** – Rolling automatically picks two dice unless the one-die rule allows a single die and kick-starts new rounds on the first tap. Players can build multi-tile selections whose totals must match the roll; valid sums now close immediately so the dice prompt the next roll, while an optional confirmation toggle in Settings remains for groups that prefer it.
+- **Turn loop** – Rolling automatically picks two dice unless the one-die rule allows a single die and kick-starts new rounds on the first tap. Players build multi-tile selections whose totals must match the roll; valid sums now close the tiles instantly so the dice prompt the next roll without a confirmation bar.
 - **Round resolution** – Rounds end once all players have no legal moves. The winner modal lists every player, highlights ties, and honours the instant-win-on-shut rule for zero scores.
 - **Instructions overlay** – "How to Play" opens an accessible modal that summarises the rules and assists new players without leaving the app.
 
@@ -43,7 +43,6 @@ All configuration knobs live inside the Settings panel:
 | One-die rule | After top tiles shut · When remainder < 6 · Never | Controls when the UI offers a single die. Inline help text explains each choice. |
 | Scoring mode | Lowest remainder · Cumulative target race · Instant win | Adapts scorekeeping. Target mode enables a configurable goal; instant mode forces instant-win behaviour. |
 | Instant win on shut | Toggle | Awards victory immediately when a player clears the board (also implied by instant scoring). |
-| Require confirmation | Toggle | Adds a confirmation bar before tiles close to prevent mis-taps (off by default; enable if you prefer manual confirmation). |
 | Auto-retry on failure | Toggle | When paired with auto-play, restarts runs automatically after round summaries. |
 | Show header details | Toggle | Expands the neon header with status chips for round, hints, and previous winners. |
 | Show code tools | Toggle | Reveals an inline cheat-code text field for `full`, `madness`, and `takeover`. |
