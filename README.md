@@ -66,7 +66,7 @@ Double tapping tile 12 also primes a secret forced double-six on the next roll.
 
 ## Assistive & automated play
 
-- Global hints illuminate legal tiles. Players can toggle hints individually (defaults to off), while the best-move highlight recommends the strongest combination.
+- Global hints illuminate legal tiles only when the header toggle is on. Players can still opt out individually from the roster (they default to receiving hints once the global toggle is active), while the best-move highlight recommends the strongest combination. Existing rosters from earlier builds automatically opt in again the next time you enable hints so you do not have to edit each player manually.
 - Auto-play follows the best-move path, shows a dismissible banner, and cooperates with the auto-retry toggle for kiosk demos.
 - Pending-turn toasts, restart countdowns, and end-turn acknowledgements keep multi-player sessions coordinated.
 - Winner and instructions modals summarise the round and provide quick rule refreshers for new players.

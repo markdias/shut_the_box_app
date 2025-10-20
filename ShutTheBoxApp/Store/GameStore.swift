@@ -30,7 +30,10 @@ final class GameStore: ObservableObject {
     var selectedTiles: [Tile] { tiles.filter { $0.isSelected && !$0.isShut } }
     var remainingTilesSum: Int { tiles.filter { !$0.isShut }.reduce(0) { $0 + $1.value } }
     var legalCombinations: [[Tile]] { GameLogic.availableCombinations(for: pendingRoll, tiles: tiles) }
-    var hintsActive: Bool { showHints || (activePlayer?.hintsEnabled ?? false) }
+    var hintsActive: Bool {
+        guard showHints else { return false }
+        return activePlayer?.hintsEnabled ?? true
+    }
     var hintedTileIds: Set<Int> { GameLogic.legalTileIds(for: pendingRoll, tiles: tiles) }
     var progressPercent: Double {
         guard options.maxTile > 0 else { return 0 }
@@ -40,6 +43,7 @@ final class GameStore: ObservableObject {
     private let storage = StorageProvider()
     private var riggedRoll: DiceRoll?
     private var currentRoundScores: [UUID: RoundScore]
+    private var hasMigratedHintPreferences: Bool = false
 
     private enum TurnResolution {
         case bust
@@ -49,7 +53,10 @@ final class GameStore: ObservableObject {
     }
 
     init() {
-        if let snapshot: GameSettingsSnapshot = storage.restore(key: .snapshot) {
+        let restoredSnapshot: GameSettingsSnapshot? = storage.restore(key: .snapshot)
+        self.hasMigratedHintPreferences = storage.restoreBool(key: .hintsMigration) ?? false
+
+        if let snapshot = restoredSnapshot {
             self.options = snapshot.options
             self.players = snapshot.players
             self.tiles = snapshot.tiles.isEmpty ? GameLogic.initialTiles(range: snapshot.options.tileRange) : snapshot.tiles
@@ -75,6 +82,7 @@ final class GameStore: ObservableObject {
             self.currentRoundScores = [:]
         }
 
+        migrateHintPreferencesIfNeeded(restoredSnapshot: restoredSnapshot)
         normalizeOptions()
         refreshBestMove()
         Task { await persistSnapshot() }
@@ -87,6 +95,9 @@ final class GameStore: ObservableObject {
 
     func toggleHints() {
         showHints.toggle()
+        if showHints {
+            ensureHintsEnabledForLegacyPlayers()
+        }
         Task { await persistSnapshot() }
     }
 
@@ -473,6 +484,36 @@ final class GameStore: ObservableObject {
             currentRoundScores: currentRoundScores
         )
         storage.persist(snapshot, key: .snapshot)
+    }
+
+    private func migrateHintPreferencesIfNeeded(restoredSnapshot: GameSettingsSnapshot?) {
+        guard !hasMigratedHintPreferences else { return }
+        defer {
+            hasMigratedHintPreferences = true
+            storage.persist(true, key: .hintsMigration)
+        }
+        guard restoredSnapshot != nil else { return }
+        guard !players.isEmpty else { return }
+        guard !players.contains(where: { $0.hintsEnabled }) else { return }
+        for idx in players.indices {
+            players[idx].hintsEnabled = true
+        }
+    }
+
+    private func ensureHintsEnabledForLegacyPlayers() {
+        guard !hasMigratedHintPreferences else { return }
+        guard !players.isEmpty else {
+            hasMigratedHintPreferences = true
+            storage.persist(true, key: .hintsMigration)
+            return
+        }
+        if !players.contains(where: { $0.hintsEnabled }) {
+            for idx in players.indices {
+                players[idx].hintsEnabled = true
+            }
+        }
+        hasMigratedHintPreferences = true
+        storage.persist(true, key: .hintsMigration)
     }
 }
 

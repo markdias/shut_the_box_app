@@ -96,13 +96,49 @@ struct Player: Identifiable, Codable, Equatable {
     var unfinishedTurns: Int
     var hintsEnabled: Bool
 
-    init(id: UUID = UUID(), name: String) {
+    init(
+        id: UUID = UUID(),
+        name: String,
+        lastScore: Int = 0,
+        totalScore: Int = 0,
+        unfinishedTurns: Int = 0,
+        hintsEnabled: Bool = true
+    ) {
         self.id = id
         self.name = name
-        self.lastScore = 0
-        self.totalScore = 0
-        self.unfinishedTurns = 0
-        self.hintsEnabled = false
+        self.lastScore = lastScore
+        self.totalScore = totalScore
+        self.unfinishedTurns = unfinishedTurns
+        self.hintsEnabled = hintsEnabled
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case lastScore
+        case totalScore
+        case unfinishedTurns
+        case hintsEnabled
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        lastScore = try container.decodeIfPresent(Int.self, forKey: .lastScore) ?? 0
+        totalScore = try container.decodeIfPresent(Int.self, forKey: .totalScore) ?? 0
+        unfinishedTurns = try container.decodeIfPresent(Int.self, forKey: .unfinishedTurns) ?? 0
+        hintsEnabled = try container.decodeIfPresent(Bool.self, forKey: .hintsEnabled) ?? true
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(lastScore, forKey: .lastScore)
+        try container.encode(totalScore, forKey: .totalScore)
+        try container.encode(unfinishedTurns, forKey: .unfinishedTurns)
+        try container.encode(hintsEnabled, forKey: .hintsEnabled)
     }
 }
 
