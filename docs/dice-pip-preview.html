@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Dice Pip Preview</title>
+<style>
+body {
+  background: radial-gradient(circle at top, #1f2a48, #0b1022);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #f0f3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+}
+.wrapper {
+  display: flex;
+  gap: 3rem;
+}
+.die {
+  width: 160px;
+  height: 160px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 32px;
+}
+.pip {
+  width: 24px;
+  height: 24px;
+  background: #ffffff;
+  border-radius: 50%;
+  justify-self: center;
+  align-self: center;
+}
+.pip.hidden {
+  visibility: hidden;
+}
+.caption {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 1.2rem;
+}
+</style>
+</head>
+<body>
+<div>
+  <div class="wrapper">
+    <div class="die" aria-label="Five">
+      <span class="pip"></span>
+      <span class="pip hidden"></span>
+      <span class="pip"></span>
+      <span class="pip hidden"></span>
+      <span class="pip"></span>
+      <span class="pip hidden"></span>
+      <span class="pip"></span>
+      <span class="pip hidden"></span>
+      <span class="pip"></span>
+    </div>
+    <div class="die" aria-label="Six">
+      <span class="pip"></span>
+      <span class="pip hidden"></span>
+      <span class="pip"></span>
+      <span class="pip"></span>
+      <span class="pip hidden"></span>
+      <span class="pip"></span>
+      <span class="pip"></span>
+      <span class="pip hidden"></span>
+      <span class="pip"></span>
+    </div>
+  </div>
+  <div class="caption">Classic pip dice styling now matches the in-app SwiftUI design.</div>
+</div>
+</body>
+</html>
