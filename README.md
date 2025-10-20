@@ -48,7 +48,7 @@ The project relies exclusively on the standard SwiftUI and Foundation frameworks
 
 ## Continuous integration
 
-GitHub Actions automatically builds the project on every push to `main` and on pull requests using Xcode 15.2. The workflow lives at [`.github/workflows/ios-build.yml`](.github/workflows/ios-build.yml) and runs `xcodebuild` against the shared **ShutTheBoxApp** scheme with code-signing disabled, ensuring the project always compiles cleanly on macOS runners.
+GitHub Actions automatically builds the project on every push to `main` and on pull requests using Xcode 16.2. The workflow lives at [`.github/workflows/ios-build.yml`](.github/workflows/ios-build.yml) and runs `xcodebuild` against the shared **ShutTheBoxApp** scheme with code-signing disabled, ensuring the project always compiles cleanly on macOS runners.
 
 ## Testing
 
