@@ -102,11 +102,59 @@ struct DiceView: View {
                         .stroke(Color.white.opacity(0.2), lineWidth: 1)
                 )
 
-            Text(value.map { String($0) } ?? "?")
-                .font(.system(size: size * 0.48, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
+            if let value, (1...6).contains(value) {
+                DicePipView(value: value)
+                    .frame(width: size * 0.68, height: size * 0.68)
+            } else {
+                Text("?")
+                    .font(.system(size: size * 0.48, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+            }
         }
         .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private var accessibilityLabel: Text {
+        if let value, (1...6).contains(value) {
+            return Text("Die showing \(value)")
+        } else {
+            return Text("Die awaiting roll")
+        }
+    }
+}
+
+private struct DicePipView: View {
+    let value: Int
+
+    private static let pipPositions: [Int: [CGPoint]] = [
+        1: [CGPoint(x: 0.5, y: 0.5)],
+        2: [CGPoint(x: 0.25, y: 0.25), CGPoint(x: 0.75, y: 0.75)],
+        3: [CGPoint(x: 0.25, y: 0.25), CGPoint(x: 0.5, y: 0.5), CGPoint(x: 0.75, y: 0.75)],
+        4: [CGPoint(x: 0.25, y: 0.25), CGPoint(x: 0.75, y: 0.25), CGPoint(x: 0.25, y: 0.75), CGPoint(x: 0.75, y: 0.75)],
+        5: [CGPoint(x: 0.25, y: 0.25), CGPoint(x: 0.75, y: 0.25), CGPoint(x: 0.5, y: 0.5), CGPoint(x: 0.25, y: 0.75), CGPoint(x: 0.75, y: 0.75)],
+        6: [CGPoint(x: 0.25, y: 0.25), CGPoint(x: 0.75, y: 0.25), CGPoint(x: 0.25, y: 0.5), CGPoint(x: 0.75, y: 0.5), CGPoint(x: 0.25, y: 0.75), CGPoint(x: 0.75, y: 0.75)]
+    ]
+
+    var body: some View {
+        GeometryReader { proxy in
+            let size = min(proxy.size.width, proxy.size.height)
+            let pipSize = size * 0.18
+            let positions = Self.pipPositions[value, default: []]
+            ZStack {
+                ForEach(Array(positions.enumerated()), id: \.offset) { entry in
+                    let position = entry.element
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: pipSize, height: pipSize)
+                        .position(
+                            x: proxy.size.width * position.x,
+                            y: proxy.size.height * position.y
+                        )
+                }
+            }
+        }
     }
 }
 

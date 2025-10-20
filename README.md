@@ -87,7 +87,7 @@ The active learning game persists so returning to the board is a single tap.
 ## User interface & responsiveness
 
 - The mobile header condenses into a menu and status toggle while desktop keeps settings and history buttons inline.
-- Dice tray animations react to rolls and surface one-die guidance inline.
+- Dice tray animations react to rolls, and the dice faces now render classic pip layouts instead of numerals while still guiding one-die play inline.
 - Status chips display round, phase, active player, roster size, previous winners, and hint status when enabled.
 - Progress cards show tiles closed, selected totals, available combinations, and completion percentage, while toast notifications announce next turns.
 - Multiple SwiftUI themes deliver neon, grid, wood, and felt aesthetics with a single toggle.
