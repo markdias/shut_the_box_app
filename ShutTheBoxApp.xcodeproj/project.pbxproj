@@ -218,7 +218,7 @@ productType = "com.apple.product-type.application";
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-6A0B200A2C5001F500A1F0E4 /* Project object */ = {
+7DF407FC9AA3C93E33071AF9 /* Project object */ = {
 isa = PBXProject;
 attributes = {
 BuildIndependentTargetsInParallel = YES;
@@ -469,5 +469,5 @@ defaultConfigurationName = Release;
 /* End XCConfigurationList section */
 
 };
-rootObject = 6A0B200A2C5001F500A1F0E4 /* Project object */;
+rootObject = 7DF407FC9AA3C93E33071AF9 /* Project object */;
 }
