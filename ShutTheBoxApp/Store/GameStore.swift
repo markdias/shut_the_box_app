@@ -30,7 +30,10 @@ final class GameStore: ObservableObject {
     var selectedTiles: [Tile] { tiles.filter { $0.isSelected && !$0.isShut } }
     var remainingTilesSum: Int { tiles.filter { !$0.isShut }.reduce(0) { $0 + $1.value } }
     var legalCombinations: [[Tile]] { GameLogic.availableCombinations(for: pendingRoll, tiles: tiles) }
-    var hintsActive: Bool { showHints || (activePlayer?.hintsEnabled ?? false) }
+    var hintsActive: Bool {
+        guard showHints else { return false }
+        return activePlayer?.hintsEnabled ?? true
+    }
     var hintedTileIds: Set<Int> { GameLogic.legalTileIds(for: pendingRoll, tiles: tiles) }
     var progressPercent: Double {
         guard options.maxTile > 0 else { return 0 }

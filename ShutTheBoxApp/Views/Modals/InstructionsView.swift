@@ -30,7 +30,7 @@ struct InstructionsView: View {
                     Group {
                         Text("Assistive Tools")
                             .font(.headline)
-                        bullet("Global hints highlight every legal tile combination; per-player hints tailor coaching.")
+                        bullet("Global hints highlight every legal tile combination when the header toggle is on; per-player toggles let players opt out of coaching.")
                         bullet("Best-move glow matches the auto-play path for hands-free demos.")
                         bullet("Cheat codes unlock perfect rolls, giant boards, and visible auto-play takeovers.")
                     }

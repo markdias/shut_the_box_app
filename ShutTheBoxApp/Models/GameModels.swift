@@ -102,7 +102,7 @@ struct Player: Identifiable, Codable, Equatable {
         self.lastScore = 0
         self.totalScore = 0
         self.unfinishedTurns = 0
-        self.hintsEnabled = false
+        self.hintsEnabled = true
     }
 }
 
