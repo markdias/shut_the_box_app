@@ -20,31 +20,51 @@ final class GameStore: ObservableObject {
     @Published private(set) var showLearning: Bool = false
     @Published private(set) var showInstructions: Bool = false
     @Published private(set) var showWinners: Bool = false
+    @Published private(set) var bestMove: [Tile] = []
+    @Published var cheatInput: String = ""
+    @Published private(set) var autoPlayEnabled: Bool = false
 
     // Derived computed values
     var activePlayer: Player? { players[safe: currentPlayerIndex] }
     var shutTilesCount: Int { tiles.filter { $0.isShut }.count }
     var selectedTiles: [Tile] { tiles.filter { $0.isSelected && !$0.isShut } }
     var remainingTilesSum: Int { tiles.filter { !$0.isShut }.reduce(0) { $0 + $1.value } }
+    var legalCombinations: [[Tile]] { GameLogic.availableCombinations(for: pendingRoll, tiles: tiles) }
+    var hintsActive: Bool { showHints || (activePlayer?.hintsEnabled ?? false) }
+    var hintedTileIds: Set<Int> { GameLogic.legalTileIds(for: pendingRoll, tiles: tiles) }
+    var progressPercent: Double {
+        guard options.maxTile > 0 else { return 0 }
+        return (Double(shutTilesCount) / Double(options.maxTile)) * 100
+    }
 
     private let storage = StorageProvider()
+    private var riggedRoll: DiceRoll?
+    private var currentRoundScores: [UUID: RoundScore]
+
+    private enum TurnResolution {
+        case bust
+        case manual
+        case shut
+        case instant
+    }
 
     init() {
         if let snapshot: GameSettingsSnapshot = storage.restore(key: .snapshot) {
             self.options = snapshot.options
             self.players = snapshot.players
-            self.tiles = snapshot.tiles
+            self.tiles = snapshot.tiles.isEmpty ? GameLogic.initialTiles(range: snapshot.options.tileRange) : snapshot.tiles
             self.phase = snapshot.phase
-            self.round = snapshot.round
+            self.round = max(snapshot.round, 1)
             self.currentPlayerIndex = snapshot.players.firstIndex { $0.id == snapshot.currentPlayerId } ?? 0
             self.pendingRoll = snapshot.pendingRoll
             self.turnLogs = snapshot.turnLogs
             self.winners = snapshot.winners
             self.previousWinner = snapshot.previousWinner
+            self.currentRoundScores = snapshot.currentRoundScores
         } else {
             self.options = .default
             self.players = [Player(name: "Player 1"), Player(name: "Player 2")]
-            self.tiles = GameLogic.initialTiles(range: .default)
+            self.tiles = GameLogic.initialTiles(range: GameOptions.default.tileRange)
             self.phase = .setup
             self.round = 1
             self.currentPlayerIndex = 0
@@ -52,7 +72,11 @@ final class GameStore: ObservableObject {
             self.turnLogs = []
             self.winners = []
             self.previousWinner = nil
+            self.currentRoundScores = [:]
         }
+
+        normalizeOptions()
+        refreshBestMove()
         Task { await persistSnapshot() }
     }
 
@@ -60,14 +84,54 @@ final class GameStore: ObservableObject {
 
     func toggleSettings() { showSettings.toggle() }
     func toggleHistory() { showHistory.toggle() }
-    func toggleHints() { showHints.toggle() }
-    func toggleLearning() { showLearning.toggle() }
+
+    func toggleHints() {
+        showHints.toggle()
+        Task { await persistSnapshot() }
+    }
+
+    func toggleLearning() {
+        guard options.showLearningGames else {
+            showLearning = false
+            return
+        }
+        showLearning.toggle()
+        Task { await persistSnapshot() }
+    }
+
     func toggleInstructions() { showInstructions.toggle() }
     func toggleWinners() { showWinners.toggle() }
 
+    func toggleAutoPlay() {
+        autoPlayEnabled.toggle()
+        if autoPlayEnabled {
+            showHints = true
+        }
+        Task { await persistSnapshot() }
+    }
+
     func updateOptions(_ update: (inout GameOptions) -> Void) {
         update(&options)
+        normalizeOptions()
+        if phase != .playing {
+            tiles = GameLogic.initialTiles(range: options.tileRange)
+            pendingRoll = DiceRoll()
+        }
+        if !options.showLearningGames {
+            showLearning = false
+        }
+        refreshBestMove()
         Task { await persistSnapshot() }
+    }
+
+    func submitCheatCode() {
+        let trimmed = cheatInput.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        cheatInput = ""
+        guard let code = CheatCode(rawValue: trimmed) else {
+            recordLog(message: "Unknown code \(trimmed)", event: .info)
+            return
+        }
+        applyCheat(code)
     }
 
     func addPlayer() {
@@ -79,6 +143,7 @@ final class GameStore: ObservableObject {
         guard players.count > 1 else { return }
         players.removeAll { $0.id == player.id }
         if currentPlayerIndex >= players.count { currentPlayerIndex = 0 }
+        currentRoundScores[player.id] = nil
         Task { await persistSnapshot() }
     }
 
@@ -90,13 +155,16 @@ final class GameStore: ObservableObject {
     }
 
     func startGame() {
-        tiles = GameLogic.initialTiles(range: options.tileRange)
-        pendingRoll = DiceRoll()
         phase = .playing
         round = max(round, 1)
         currentPlayerIndex = 0
+        currentRoundScores.removeAll()
+        tiles = GameLogic.initialTiles(range: options.tileRange)
+        pendingRoll = DiceRoll()
+        bestMove = []
         turnLogs.removeAll()
         showInstructions = false
+        showWinners = false
         Task { await persistSnapshot() }
     }
 
@@ -109,22 +177,35 @@ final class GameStore: ObservableObject {
         turnLogs.removeAll()
         winners.removeAll()
         previousWinner = nil
+        riggedRoll = nil
+        bestMove = []
+        currentRoundScores.removeAll()
+        autoPlayEnabled = false
+        showLearning = false
         for idx in players.indices {
             players[idx].lastScore = 0
             players[idx].totalScore = 0
+            players[idx].unfinishedTurns = 0
         }
         Task { await persistSnapshot() }
     }
 
     func rollDice(force value: DiceRoll? = nil) {
-        let nextRoll = value ?? GameLogic.generateRoll(using: options, tiles: tiles)
+        if phase != .playing {
+            startGame()
+        }
+        let nextRoll = value ?? GameLogic.generateRoll(using: options, tiles: tiles, preferredRiggedRoll: riggedRoll)
+        riggedRoll = nil
         pendingRoll = nextRoll
-        let rollMessage = "Rolled \(nextRoll.values.map(String.init).joined(separator: ", "))"
-        turnLogs.append(TurnLog(playerId: activePlayer?.id ?? UUID(), message: rollMessage))
+        refreshBestMove()
+        recordLog(message: "Rolled \(nextRoll.valuesDescription)", event: .roll)
 
-        if GameLogic.availableCombinations(for: nextRoll, tiles: tiles).isEmpty {
-            turnLogs.append(TurnLog(playerId: activePlayer?.id ?? UUID(), message: "No available moves"))
-            evaluateEndOfTurn(using: nextRoll)
+        let combos = legalCombinations
+        if combos.isEmpty {
+            recordLog(message: "No available moves", event: .bust)
+            completeTurn(score: GameLogic.remainingScore(tiles: tiles), tilesClosed: shutTilesCount, didShut: false, resolution: .bust)
+        } else if autoPlayEnabled {
+            Task { @MainActor in await performAutoPlayMove(using: combos) }
         } else {
             Task { await persistSnapshot() }
         }
@@ -134,24 +215,40 @@ final class GameStore: ObservableObject {
         guard phase == .playing else { return }
         guard pendingRoll.total > 0 else { return }
         guard GameLogic.isTileSelectable(tile, in: tiles, pendingRoll: pendingRoll) else { return }
-        if let idx = tiles.firstIndex(where: { $0.id == tile.id }) {
-            tiles[idx].isSelected.toggle()
+        guard let idx = tiles.firstIndex(where: { $0.id == tile.id }) else { return }
+
+        tiles[idx].isSelected.toggle()
+        if !options.requireConfirmation && GameLogic.validateSelection(selectedTiles, roll: pendingRoll) {
+            confirmSelection()
         }
     }
 
     func confirmSelection() {
-        let selected = selectedTiles
-        guard !selected.isEmpty else { return }
-        guard GameLogic.validateSelection(selected, roll: pendingRoll) else { return }
-        for tile in selected {
+        guard phase == .playing else { return }
+        let selection = selectedTiles
+        guard !selection.isEmpty else { return }
+        guard GameLogic.validateSelection(selection, roll: pendingRoll) else { return }
+
+        let closedValues = selection.map { $0.value }.sorted()
+        for tile in selection {
             if let idx = tiles.firstIndex(where: { $0.id == tile.id }) {
                 tiles[idx].isShut = true
                 tiles[idx].isSelected = false
             }
         }
-        let completedRoll = pendingRoll
+
+        recordLog(message: "Closed tiles \(closedValues.map(String.init).joined(separator: ", "))", event: .move)
         pendingRoll = DiceRoll()
-        evaluateEndOfTurn(using: completedRoll)
+        refreshBestMove()
+
+        if GameLogic.isBoxShut(tiles: tiles) {
+            completeTurn(score: 0, tilesClosed: options.maxTile, didShut: true, resolution: .shut)
+        } else {
+            Task { await persistSnapshot() }
+            if autoPlayEnabled {
+                rollDice()
+            }
+        }
     }
 
     func cancelSelection() {
@@ -161,67 +258,200 @@ final class GameStore: ObservableObject {
     }
 
     func endTurn() {
+        guard phase == .playing else { return }
         cancelSelection()
-        let completedRoll = pendingRoll
-        pendingRoll = DiceRoll()
-        evaluateEndOfTurn(using: completedRoll)
-        if phase == .playing {
-            advanceToNextPlayer()
-        }
+        let score = GameLogic.remainingScore(tiles: tiles)
+        let closed = shutTilesCount
+        let didShut = GameLogic.isBoxShut(tiles: tiles)
+        recordLog(message: "Turn ended with score \(score)", event: .info)
+        completeTurn(score: score, tilesClosed: closed, didShut: didShut, resolution: didShut ? .shut : .manual)
+    }
+
+    func forceDoubleSixCheat() {
+        riggedRoll = DiceRoll(first: 6, second: 6)
+        recordLog(message: "Secret double-six armed", event: .cheat)
     }
 
     func exportScores() -> URL? {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        guard let data = try? encoder.encode(players) else { return nil }
+        let export = ScoreExport(round: round,
+                                 phase: phase,
+                                 theme: ThemeManager.persistedTheme(),
+                                 players: players,
+                                 currentRoundScores: currentRoundScores)
+        guard let data = try? encoder.encode(export) else { return nil }
         let directory = FileManager.default.temporaryDirectory
-        let url = directory.appendingPathComponent("ShutTheBoxScores.json")
+        let url = directory.appendingPathComponent("shut-the-box-scores.json")
         try? data.write(to: url)
         return url
     }
 
     // MARK: - Private helpers
 
-    private func evaluateEndOfTurn(using roll: DiceRoll) {
-        if GameLogic.isBoxShut(tiles: tiles) {
-            handleRoundWin(score: 0)
-            Task { await persistSnapshot() }
-            return
+    private func performAutoPlayMove(using combinations: [[Tile]]) async {
+        try? await Task.sleep(nanoseconds: 350_000_000)
+        if pendingRoll.total == 0 { return }
+        let move = bestMove.isEmpty ? combinations.first ?? [] : bestMove
+        for tile in move {
+            if let idx = tiles.firstIndex(where: { $0.id == tile.id }) {
+                tiles[idx].isSelected = true
+            }
         }
-
-        if GameLogic.availableCombinations(for: roll, tiles: tiles).isEmpty {
-            let score = GameLogic.remainingScore(tiles: tiles)
-            handleRoundWin(score: score)
-            Task { await persistSnapshot() }
-            return
-        }
-
-        Task { await persistSnapshot() }
+        confirmSelection()
     }
 
-    private func handleRoundWin(score: Int) {
+    private func completeTurn(score: Int, tilesClosed: Int, didShut: Bool, resolution: TurnResolution) {
         guard let player = activePlayer else { return }
         var updatedPlayer = player
         updatedPlayer.lastScore = score
         updatedPlayer.totalScore += score
+        if score > 0 { updatedPlayer.unfinishedTurns += 1 }
+
         if let idx = players.firstIndex(where: { $0.id == player.id }) {
             players[idx] = updatedPlayer
         }
-        let winner = WinnerSummary(playerName: player.name, score: score, tilesShut: shutTilesCount)
-        winners.insert(winner, at: 0)
-        previousWinner = winner
-        phase = .roundComplete
-        showWinners = true
-        round += 1
-        turnLogs.append(TurnLog(playerId: player.id, message: "Round won with score \(score)"))
+
+        currentRoundScores[player.id] = RoundScore(score: score, tilesShut: tilesClosed)
+        bestMove = []
         pendingRoll = DiceRoll()
+        tiles = GameLogic.initialTiles(range: options.tileRange)
+
+        switch resolution {
+        case .bust:
+            recordLog(message: "Bust for \(player.name). Remaining: \(score)", event: .bust)
+        case .manual:
+            recordLog(message: "Stored \(score) for \(player.name)", event: .info)
+        case .shut:
+            recordLog(message: "Shut the box!", event: .win)
+        case .instant:
+            recordLog(message: "Instant victory", event: .win)
+        }
+
+        if options.instantWinOnShut && didShut {
+            finalizeInstantWin(for: updatedPlayer, tilesClosed: tilesClosed)
+            return
+        }
+
+        advanceToNextPlayerOrFinalize()
+        Task { await persistSnapshot() }
     }
 
-    private func advanceToNextPlayer() {
-        currentPlayerIndex = (currentPlayerIndex + 1) % players.count
-        if currentPlayerIndex == 0 {
-            round += 1
+    private func finalizeInstantWin(for player: Player, tilesClosed: Int) {
+        let summary = WinnerSummary(playerName: player.name, score: 0, tilesShut: tilesClosed)
+        winners = [summary]
+        previousWinner = summary
+        showWinners = true
+        phase = .roundComplete
+        round += 1
+        currentRoundScores.removeAll()
+        currentPlayerIndex = 0
+        pendingRoll = DiceRoll()
+        scheduleAutoRetryIfNeeded()
+        Task { await persistSnapshot() }
+    }
+
+    private func advanceToNextPlayerOrFinalize() {
+        if currentRoundScores.count >= players.count {
+            finalizeRound()
+            return
         }
+
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.count
+    }
+
+    private func finalizeRound() {
+        phase = .roundComplete
+        round += 1
+        currentPlayerIndex = 0
+
+        let summaries = roundSummaries()
+        winners = summaries
+        previousWinner = summaries.first
+        showWinners = true
+        scheduleAutoRetryIfNeeded()
+        currentRoundScores.removeAll()
+        pendingRoll = DiceRoll()
+        Task { await persistSnapshot() }
+    }
+
+    private func scheduleAutoRetryIfNeeded() {
+        guard options.autoRetry || autoPlayEnabled else { return }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            startGame()
+        }
+    }
+
+    private func roundSummaries() -> [WinnerSummary] {
+        guard !currentRoundScores.isEmpty else { return [] }
+
+        switch options.scoringMode {
+        case .lowestRemainder, .instantWin:
+            let best = currentRoundScores.values.map { $0.score }.min() ?? 0
+            let winners = players.filter { currentRoundScores[$0.id]?.score == best }
+            return winners.map { player in
+                let data = currentRoundScores[player.id] ?? RoundScore(score: 0, tilesShut: 0)
+                return WinnerSummary(playerName: player.name, score: data.score, tilesShut: data.tilesShut)
+            }
+        case .targetRace:
+            let contenders = players.filter { $0.totalScore >= options.targetGoal }
+            if contenders.isEmpty {
+                let best = currentRoundScores.values.map { $0.score }.min() ?? 0
+                return players.filter { currentRoundScores[$0.id]?.score == best }.map { player in
+                    let data = currentRoundScores[player.id] ?? RoundScore(score: 0, tilesShut: 0)
+                    return WinnerSummary(playerName: player.name, score: data.score, tilesShut: data.tilesShut)
+                }
+            }
+            let minimum = contenders.map { $0.totalScore }.min() ?? options.targetGoal
+            return contenders.filter { $0.totalScore == minimum }.map { player in
+                let data = currentRoundScores[player.id] ?? RoundScore(score: 0, tilesShut: 0)
+                return WinnerSummary(playerName: player.name, score: data.score, tilesShut: data.tilesShut)
+            }
+        }
+    }
+
+    private func refreshBestMove() {
+        bestMove = GameLogic.bestMove(for: pendingRoll, tiles: tiles)
+    }
+
+    private func normalizeOptions() {
+        if options.scoringMode == .instantWin {
+            options.instantWinOnShut = true
+        }
+        if !options.cheatCodes.contains(.madness) {
+            options.maxTile = min(options.maxTile, 12)
+        }
+    }
+
+    private func applyCheat(_ code: CheatCode) {
+        switch code {
+        case .madness:
+            updateOptions { options in
+                options.maxTile = 56
+                options.cheatCodes.insert(.madness)
+            }
+            tiles = GameLogic.initialTiles(range: options.tileRange)
+        case .full:
+            updateOptions { options in
+                options.cheatCodes.insert(.full)
+            }
+            recordLog(message: "Perfect-roll rigging engaged", event: .cheat)
+        case .takeover:
+            updateOptions { options in
+                options.cheatCodes.insert(.takeover)
+                options.autoRetry = true
+            }
+            autoPlayEnabled = true
+            showHints = true
+            startGame()
+            recordLog(message: "Auto-play takeover active", event: .cheat)
+        }
+    }
+
+    private func recordLog(message: String, event: TurnEvent, playerId: UUID? = nil) {
+        let id = playerId ?? activePlayer?.id ?? UUID()
+        turnLogs.append(TurnLog(playerId: id, message: message, event: event))
     }
 
     private func persistSnapshot() async {
@@ -236,11 +466,11 @@ final class GameStore: ObservableObject {
             winners: winners,
             round: round,
             previousWinner: previousWinner,
-            theme: ThemeManager.persistedTheme()
+            theme: ThemeManager.persistedTheme(),
+            currentRoundScores: currentRoundScores
         )
         storage.persist(snapshot, key: .snapshot)
     }
-
 }
 
 private extension Array {
@@ -249,6 +479,16 @@ private extension Array {
     }
 }
 
-private extension ClosedRange where Bound == Int {
-    static let `default`: ClosedRange<Int> = 1...12
+private struct ScoreExport: Codable {
+    let round: Int
+    let phase: GamePhase
+    let theme: ThemeOption
+    let players: [Player]
+    let currentRoundScores: [UUID: RoundScore]
+}
+
+private extension DiceRoll {
+    var valuesDescription: String {
+        values.map(String.init).joined(separator: ", ")
+    }
 }

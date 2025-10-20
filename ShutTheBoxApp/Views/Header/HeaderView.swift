@@ -36,7 +36,7 @@ struct HeaderView: View {
             }
             .padding(.horizontal)
 
-            if !isCompact {
+            if !isCompact && store.options.showHeaderDetails {
                 HStack(spacing: 12) {
                     StatusChip(title: "Active Player", value: store.activePlayer?.name ?? "-")
                     StatusChip(title: "Players", value: "\(store.players.count)")
@@ -47,6 +47,16 @@ struct HeaderView: View {
                     }
                 }
                 .padding(.horizontal)
+            }
+
+            if store.options.showCodeTools {
+                CheatCodeToolbar()
+                    .padding(.horizontal)
+            }
+
+            if store.autoPlayEnabled {
+                AutoPlayBanner()
+                    .padding(.horizontal)
             }
         }
         .padding(.vertical, 16)
@@ -69,7 +79,9 @@ struct HeaderView: View {
         HeaderButton(title: "Show Settings", icon: "gearshape.fill") { store.toggleSettings() }
         HeaderButton(title: "Show History", icon: "clock.fill") { store.toggleHistory() }
         HeaderButton(title: store.showHints ? "Hide Hints" : "Show Hints", icon: "lightbulb.fill") { store.toggleHints() }
-        HeaderButton(title: "More Games", icon: "gamecontroller.fill") { store.toggleLearning() }
+        if store.options.showLearningGames {
+            HeaderButton(title: "More Games", icon: "gamecontroller.fill") { store.toggleLearning() }
+        }
         HeaderButton(title: "Save Scores", icon: "square.and.arrow.down.fill") { exportScores() }
         HeaderButton(title: "Reset", icon: "gobackward") { store.resetGame() }
         HeaderButton(title: "End Turn", icon: "flag.checkered") { store.endTurn() }
@@ -80,6 +92,42 @@ struct HeaderView: View {
         guard let url = store.exportScores() else { return }
         let activity = UIActivityViewController(activityItems: [url], applicationActivities: nil)
         UIApplication.shared.presentedWindowRoot?.present(activity, animated: true)
+    }
+}
+
+private struct CheatCodeToolbar: View {
+    @EnvironmentObject private var store: GameStore
+
+    var body: some View {
+        HStack(spacing: 12) {
+            TextField("Enter code", text: $store.cheatInput)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .padding(12)
+                .background(Color.white.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+            Button("Apply") { store.submitCheatCode() }
+                .buttonStyle(NeonButtonStyle())
+        }
+    }
+}
+
+private struct AutoPlayBanner: View {
+    @EnvironmentObject private var store: GameStore
+
+    var body: some View {
+        HStack {
+            Label("Auto-play running", systemImage: "sparkles")
+            Spacer()
+            Button("Stop") { store.toggleAutoPlay() }
+                .buttonStyle(SecondaryButtonStyle())
+        }
+        .font(.footnote.weight(.semibold))
+        .foregroundColor(.white)
+        .padding(12)
+        .background(Color.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 

@@ -11,9 +11,13 @@ struct HistoryView: View {
             ForEach(store.turnLogs) { log in
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(log.message)
-                            .font(.subheadline)
-                            .foregroundColor(.white)
+                        HStack(spacing: 8) {
+                            Image(systemName: log.event.systemImage)
+                                .foregroundColor(log.event.tint)
+                            Text(log.message)
+                        }
+                        .font(.subheadline)
+                        .foregroundColor(.white)
                         Text(log.timestamp, style: .time)
                             .font(.caption2)
                             .foregroundColor(.white.opacity(0.6))
@@ -39,7 +43,11 @@ struct HistorySheetView: View {
         NavigationStack {
             List(store.turnLogs) { log in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(log.message)
+                    HStack(spacing: 8) {
+                        Image(systemName: log.event.systemImage)
+                            .foregroundColor(log.event.tint)
+                        Text(log.message)
+                    }
                     Text(log.timestamp, style: .time)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -51,6 +59,30 @@ struct HistorySheetView: View {
                     Button("Close", action: dismiss.callAsFunction)
                 }
             }
+        }
+    }
+}
+
+private extension TurnEvent {
+    var systemImage: String {
+        switch self {
+        case .roll: return "die.face.6"
+        case .move: return "square.grid.3x3.fill"
+        case .bust: return "exclamationmark.triangle"
+        case .win: return "crown.fill"
+        case .info: return "info.circle"
+        case .cheat: return "wand.and.rays"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .roll: return .mint
+        case .move: return .blue
+        case .bust: return .orange
+        case .win: return .yellow
+        case .info: return .gray
+        case .cheat: return .purple
         }
     }
 }

@@ -2,8 +2,8 @@ import Foundation
 
 struct StorageProvider {
     enum Key: String {
-        case snapshot
-        case theme
+        case snapshot = "shut-the-box:scores"
+        case theme = "shut-the-box:theme"
     }
 
     private let defaults = UserDefaults.standard

@@ -6,17 +6,40 @@ struct InstructionsView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 20) {
                     Text("How to Play")
                         .font(.title.weight(.bold))
-                    Text("Roll the dice, shut tiles that add up to the total, and race to finish with the lowest score. Use hints for strategy inspiration and explore learning games for younger players.")
-                    Text("Key Rules")
-                        .font(.headline)
-                    VStack(alignment: .leading, spacing: 8) {
-                        bullet("Players take turns rolling two dice and shutting tiles that match the sum.")
-                        bullet("When only low tiles remain, the one-die rule can change depending on settings.")
-                        bullet("If no moves remain, add the uncovered tiles for the round score.")
-                        bullet("Instant-win tiles and cheat codes mirror the web version for parity.")
+
+                    Group {
+                        Text("Core Gameplay")
+                            .font(.headline)
+                        bullet("Setup options, add players, and keep previous scores thanks to automatic persistence.")
+                        bullet("Roll automatically chooses two dice unless the one-die rule allows a single die.")
+                        bullet("Tap open tiles whose sum matches the roll. Enable confirmation to avoid mis-taps.")
+                        bullet("Rounds close once every player has no legal moves. Ties appear in the winner modal.")
+                    }
+
+                    Group {
+                        Text("Rules & Scoring")
+                            .font(.headline)
+                        bullet("Adjust highest tile, one-die timing, and scoring mode inside Settings → Rules.")
+                        bullet("Instant-win on shut ends the round immediately when the board is cleared.")
+                        bullet("Target mode tracks cumulative totals until someone reaches the goal.")
+                    }
+
+                    Group {
+                        Text("Assistive Tools")
+                            .font(.headline)
+                        bullet("Global hints highlight every legal tile combination; per-player hints tailor coaching.")
+                        bullet("Best-move glow matches the auto-play path for hands-free demos.")
+                        bullet("Cheat codes unlock perfect rolls, giant boards, and visible auto-play takeovers.")
+                    }
+
+                    Group {
+                        Text("Learning Corner")
+                            .font(.headline)
+                        bullet("Switch to the Learning Games tab for phonics, shapes, dice flashcards, and math mixers.")
+                        bullet("Progress and selected games persist so returning to the main board is a single tap.")
                     }
                 }
                 .padding()

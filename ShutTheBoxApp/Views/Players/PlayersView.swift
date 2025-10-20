@@ -54,6 +54,7 @@ private struct PlayerRow: View {
             HStack {
                 StatChip(label: "Last", value: "\(player.lastScore)")
                 StatChip(label: "Total", value: "\(player.totalScore)")
+                StatChip(label: "Unfinished", value: "\(player.unfinishedTurns)")
             }
         }
         .padding()
