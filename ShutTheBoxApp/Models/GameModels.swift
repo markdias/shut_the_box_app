@@ -102,7 +102,7 @@ struct Player: Identifiable, Codable, Equatable {
         self.lastScore = 0
         self.totalScore = 0
         self.unfinishedTurns = 0
-        self.hintsEnabled = true
+        self.hintsEnabled = false
     }
 }
 
@@ -222,7 +222,7 @@ struct GameOptions: Codable {
         scoringMode: .lowestRemainder,
         targetGoal: 100,
         instantWinOnShut: true,
-        requireConfirmation: true,
+        requireConfirmation: false,
         autoRetry: false,
         showHeaderDetails: true,
         showCodeTools: false,

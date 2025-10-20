@@ -14,9 +14,15 @@ body {
   min-height: 100vh;
   margin: 0;
 }
-.wrapper {
+.tray {
   display: flex;
-  gap: 3rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+}
+.dice-row {
+  display: flex;
+  gap: 2rem;
 }
 .die {
   width: 160px;
@@ -30,6 +36,8 @@ body {
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
   padding: 32px;
+  cursor: pointer;
+  transition: transform 120ms ease;
 }
 .pip {
   width: 24px;
@@ -42,6 +50,36 @@ body {
 .pip.hidden {
   visibility: hidden;
 }
+.die:active {
+  transform: scale(0.97);
+}
+.hint {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+.buttons {
+  display: flex;
+  gap: 1rem;
+}
+.button {
+  padding: 0.85rem 1.8rem;
+  border-radius: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+.button.primary {
+  background: linear-gradient(135deg, rgba(142, 68, 173, 0.85), rgba(52, 152, 219, 0.85));
+  color: white;
+  box-shadow: 0 12px 24px rgba(94, 60, 133, 0.45);
+}
+.button.secondary {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+}
 .caption {
   text-align: center;
   margin-top: 1rem;
@@ -51,28 +89,35 @@ body {
 </head>
 <body>
 <div>
-  <div class="wrapper">
-    <div class="die" aria-label="Five">
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
+  <div class="tray">
+    <div class="dice-row">
+      <div class="die" aria-label="Five">
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+      </div>
+      <div class="die" aria-label="Six">
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+        <span class="pip"></span>
+        <span class="pip hidden"></span>
+        <span class="pip"></span>
+      </div>
     </div>
-    <div class="die" aria-label="Six">
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
-      <span class="pip"></span>
-      <span class="pip hidden"></span>
-      <span class="pip"></span>
+    <div class="hint">Tap the dice to roll. Select tiles totalling 11 to keep the turn alive.</div>
+    <div class="buttons">
+      <div class="button primary">Start Game</div>
+      <div class="button secondary">End Turn</div>
     </div>
   </div>
   <div class="caption">Classic pip dice styling now matches the in-app SwiftUI design.</div>

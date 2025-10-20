@@ -36,9 +36,23 @@ struct DiceTrayView: View {
                 .font(.title3.weight(.semibold))
                 .foregroundColor(.white)
 
-            HStack(spacing: 16) {
-                DiceView(value: store.pendingRoll.first, size: isCompact ? 72 : 88)
-                DiceView(value: store.pendingRoll.second, size: isCompact ? 72 : 88)
+            Button(action: store.rollDice) {
+                HStack(spacing: 16) {
+                    DiceView(value: store.pendingRoll.first, size: isCompact ? 72 : 88)
+                    DiceView(value: store.pendingRoll.second, size: isCompact ? 72 : 88)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!canRoll)
+            .opacity(canRoll ? 1 : 0.6)
+            .accessibilityLabel(rollAccessibilityLabel)
+            .accessibilityAddTraits(.isButton)
+
+            if store.phase == .setup || store.phase == .playing {
+                Text(canRoll ? "Tap the dice to roll." : "Select tiles totalling \(store.pendingRoll.total) to continue.")
+                    .font(.callout)
+                    .foregroundColor(.white.opacity(0.7))
             }
 
             Group {
@@ -63,23 +77,43 @@ struct DiceTrayView: View {
 
     @ViewBuilder
     private var actionButtons: some View {
-        Button(action: store.startGame) {
-            Label("Start Game", systemImage: "play.fill")
-                .frame(maxWidth: .infinity)
+        if store.phase != .playing {
+            Button(action: store.startGame) {
+                Label("Start Game", systemImage: "play.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(NeonButtonStyle())
         }
-        .buttonStyle(NeonButtonStyle())
 
-        Button(action: { store.rollDice() }) {
-            Label(store.pendingRoll.total == 0 ? "Roll to Begin" : "Roll Again", systemImage: "die.face.5")
-                .frame(maxWidth: .infinity)
+        if store.phase == .playing {
+            Button(action: store.endTurn) {
+                Label("End Turn", systemImage: "flag.checkered")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(SecondaryButtonStyle())
         }
-        .buttonStyle(NeonButtonStyle())
+    }
 
-        Button(action: store.endTurn) {
-            Label("End Turn", systemImage: "flag.checkered")
-                .frame(maxWidth: .infinity)
+    private var canRoll: Bool {
+        switch store.phase {
+        case .setup:
+            return true
+        case .playing:
+            return store.pendingRoll.total == 0 && store.selectedTiles.isEmpty
+        case .roundComplete:
+            return false
         }
-        .buttonStyle(SecondaryButtonStyle())
+    }
+
+    private var rollAccessibilityLabel: Text {
+        if canRoll {
+            if store.phase == .setup {
+                return Text("Tap to start the game by rolling the dice")
+            } else {
+                return Text("Tap to roll the dice again")
+            }
+        }
+        return Text("Resolve the current selection before rolling again")
     }
 }
 

@@ -29,7 +29,7 @@ ShutTheBoxApp/
 ## Core gameplay flow
 
 - **Setup** – Configure options, add players, and keep the scoreboard from previous sessions thanks to `UserDefaults` persistence that mirrors the original web client's localStorage snapshot.
-- **Turn loop** – Rolling automatically picks two dice unless the one-die rule allows a single die and kick-starts new rounds on the first tap. Players can build multi-tile selections whose totals must match the roll; the confirmation bar only lights up for valid sums to prevent accidental closures on touch devices.
+- **Turn loop** – Rolling automatically picks two dice unless the one-die rule allows a single die and kick-starts new rounds on the first tap. Players can build multi-tile selections whose totals must match the roll; valid sums now close immediately so the dice prompt the next roll, while an optional confirmation toggle in Settings remains for groups that prefer it.
 - **Round resolution** – Rounds end once all players have no legal moves. The winner modal lists every player, highlights ties, and honours the instant-win-on-shut rule for zero scores.
 - **Instructions overlay** – "How to Play" opens an accessible modal that summarises the rules and assists new players without leaving the app.
 
@@ -43,7 +43,7 @@ All configuration knobs live inside the Settings panel:
 | One-die rule | After top tiles shut · When remainder < 6 · Never | Controls when the UI offers a single die. Inline help text explains each choice. |
 | Scoring mode | Lowest remainder · Cumulative target race · Instant win | Adapts scorekeeping. Target mode enables a configurable goal; instant mode forces instant-win behaviour. |
 | Instant win on shut | Toggle | Awards victory immediately when a player clears the board (also implied by instant scoring). |
-| Require confirmation | Toggle | Adds a confirmation bar before tiles close to prevent mis-taps. |
+| Require confirmation | Toggle | Adds a confirmation bar before tiles close to prevent mis-taps (off by default; enable if you prefer manual confirmation). |
 | Auto-retry on failure | Toggle | When paired with auto-play, restarts runs automatically after round summaries. |
 | Show header details | Toggle | Expands the neon header with status chips for round, hints, and previous winners. |
 | Show code tools | Toggle | Reveals an inline cheat-code text field for `full`, `madness`, and `takeover`. |
@@ -67,7 +67,7 @@ Double tapping tile 12 also primes a secret forced double-six on the next roll.
 
 ## Assistive & automated play
 
-- Global hints illuminate legal tiles. Players can toggle hints individually, while the best-move highlight recommends the strongest combination.
+- Global hints illuminate legal tiles. Players can toggle hints individually (defaults to off), while the best-move highlight recommends the strongest combination.
 - Auto-play follows the best-move path, shows a dismissible banner, and cooperates with the auto-retry toggle for kiosk demos.
 - Pending-turn toasts, restart countdowns, and end-turn acknowledgements keep multi-player sessions coordinated.
 - Winner and instructions modals summarise the round and provide quick rule refreshers for new players.
@@ -87,7 +87,7 @@ The active learning game persists so returning to the board is a single tap.
 ## User interface & responsiveness
 
 - The mobile header condenses into a menu and status toggle while desktop keeps settings and history buttons inline.
-- Dice tray animations react to rolls, and the dice faces now render classic pip layouts instead of numerals while still guiding one-die play inline.
+- Dice tray animations react to rolls, the dice faces render classic pip layouts instead of numerals, and the dice themselves are now the roll trigger—no extra button tapping required.
 - Status chips display round, phase, active player, roster size, previous winners, and hint status when enabled.
 - Progress cards show tiles closed, selected totals, available combinations, and completion percentage, while toast notifications announce next turns.
 - Multiple SwiftUI themes deliver neon, grid, wood, and felt aesthetics with a single toggle.
