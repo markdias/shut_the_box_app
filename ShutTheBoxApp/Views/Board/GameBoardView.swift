@@ -81,9 +81,15 @@ struct DiceTrayView: View {
                 }
 
                 Button(action: { store.rollDice() }) {
-                    HStack(spacing: 16) {
-                        DiceView(value: store.pendingRoll.first, size: isCompact ? 96 : 120)
-                        DiceView(value: store.pendingRoll.second, size: isCompact ? 96 : 120)
+                    Group {
+                        if let score = finalRoundScore {
+                            ScoreDicePair(score: score, size: isCompact ? 96 : 120)
+                        } else {
+                            HStack(spacing: 16) {
+                                DiceView(value: store.pendingRoll.first, size: isCompact ? 96 : 120)
+                                DiceView(value: store.pendingRoll.second, size: isCompact ? 96 : 120)
+                            }
+                        }
                     }
                     .padding(.top, bannerClearance)
                     .contentShape(Rectangle())
@@ -119,6 +125,11 @@ struct DiceTrayView: View {
         case .roundComplete:
             return !store.showWinners
         }
+    }
+
+    private var finalRoundScore: Int? {
+        guard store.phase == .roundComplete else { return nil }
+        return store.completedRoundScore
     }
 
     private var trayTitle: String {
@@ -258,6 +269,61 @@ struct DiceView: View {
         } else {
             return Text("Die awaiting roll")
         }
+    }
+}
+
+private struct ScoreDicePair: View {
+    let score: Int
+    let size: CGFloat
+
+    private var digitSegments: (leading: String, trailing: String) {
+        let absolute = abs(score)
+        let scoreText = String(absolute)
+        guard scoreText.count > 1 else {
+            return ("", scoreText)
+        }
+        let leading = String(scoreText.dropLast())
+        let trailing = String(scoreText.suffix(1))
+        return (leading, trailing)
+    }
+
+    var body: some View {
+        let segments = digitSegments
+        HStack(spacing: 16) {
+            ScoreDieView(text: segments.leading, size: size)
+            ScoreDieView(text: segments.trailing, size: size)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Last score \(score)"))
+    }
+}
+
+private struct ScoreDieView: View {
+    let text: String
+    let size: CGFloat
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 24)
+                .fill(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.08), Color.white.opacity(0.02)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: size, height: size)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(Color.white.opacity(0.28), lineWidth: 1.5)
+                )
+
+            Text(text.isEmpty ? " " : text)
+                .font(.system(size: size * 0.38, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+        }
+        .frame(width: size, height: size)
+        .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 14)
     }
 }
 

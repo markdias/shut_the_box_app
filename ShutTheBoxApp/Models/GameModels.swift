@@ -280,6 +280,7 @@ struct GameSettingsSnapshot: Codable {
     var previousWinner: WinnerSummary?
     var theme: ThemeOption
     var currentRoundScores: [UUID: RoundScore] = [:]
+    var completedRoundScore: Int?
 }
 
 extension GameOptions {
