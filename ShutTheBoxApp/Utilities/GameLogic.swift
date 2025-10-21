@@ -5,24 +5,31 @@ enum GameLogic {
         range.map { Tile(id: $0, value: $0, isShut: false, isSelected: false) }
     }
 
-    static func generateRoll(using options: GameOptions, tiles: [Tile], preferredRiggedRoll: DiceRoll? = nil) -> DiceRoll {
+    static func generateRoll(
+        using options: GameOptions,
+        tiles: [Tile],
+        preferredRiggedRoll: DiceRoll? = nil,
+        dieMode: DiceMode
+    ) -> DiceRoll {
         if let preferredRiggedRoll {
             return preferredRiggedRoll
         }
 
         let remaining = tiles.filter { !$0.isShut }
-        let useOneDie = shouldUseOneDie(rule: options.oneDieRule, tiles: remaining)
+        let allowSingleDie = shouldUseOneDie(rule: options.oneDieRule, tiles: remaining)
+        let resolvedMode: DiceMode = allowSingleDie ? dieMode : .double
 
         if options.cheatCodes.contains(.full),
-           let rigged = riggedRollForPerfectMove(tiles: remaining, prefersSingleDie: useOneDie) {
+           let rigged = riggedRollForPerfectMove(tiles: remaining, prefersSingleDie: resolvedMode == .single) {
             return rigged
         }
 
-        if useOneDie {
+        switch resolvedMode {
+        case .single:
             return DiceRoll(first: Int.random(in: 1...6), second: nil)
+        case .double:
+            return DiceRoll(first: Int.random(in: 1...6), second: Int.random(in: 1...6))
         }
-
-        return DiceRoll(first: Int.random(in: 1...6), second: Int.random(in: 1...6))
     }
 
     static func shouldUseOneDie(rule: OneDieRule, tiles: [Tile]) -> Bool {

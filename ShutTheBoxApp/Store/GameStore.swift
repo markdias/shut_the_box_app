@@ -11,6 +11,7 @@ final class GameStore: ObservableObject {
     @Published private(set) var round: Int
     @Published private(set) var currentPlayerIndex: Int
     @Published private(set) var pendingRoll: DiceRoll
+    @Published private(set) var dieMode: DiceMode
     @Published private(set) var turnLogs: [TurnLog]
     @Published private(set) var winners: [WinnerSummary]
     @Published private(set) var previousWinner: WinnerSummary?
@@ -41,12 +42,20 @@ final class GameStore: ObservableObject {
         guard options.maxTile > 0 else { return 0 }
         return (Double(shutTilesCount) / Double(options.maxTile)) * 100
     }
+    var canAdjustDieMode: Bool {
+        phase == .playing && GameLogic.shouldUseOneDie(rule: options.oneDieRule, tiles: tiles)
+    }
+    var activeDieMode: DiceMode {
+        let allowSingle = GameLogic.shouldUseOneDie(rule: options.oneDieRule, tiles: tiles)
+        return allowSingle ? dieMode : .double
+    }
 
     private let storage = StorageProvider()
     private var riggedRoll: DiceRoll?
     private var currentRoundScores: [UUID: RoundScore]
     private var hasMigratedHintPreferences: Bool = false
     private var lastRolledDice: DiceRoll?
+    private var lastSingleDieAvailability: Bool = false
 
     private enum TurnResolution {
         case bust
@@ -67,6 +76,7 @@ final class GameStore: ObservableObject {
             self.round = max(snapshot.round, 1)
             self.currentPlayerIndex = snapshot.players.firstIndex { $0.id == snapshot.currentPlayerId } ?? 0
             self.pendingRoll = snapshot.pendingRoll
+            self.dieMode = snapshot.dieMode
             self.turnLogs = snapshot.turnLogs
             self.winners = snapshot.winners
             self.previousWinner = snapshot.previousWinner
@@ -82,6 +92,7 @@ final class GameStore: ObservableObject {
             self.round = 1
             self.currentPlayerIndex = 0
             self.pendingRoll = DiceRoll()
+            self.dieMode = .double
             self.turnLogs = []
             self.winners = []
             self.previousWinner = nil
@@ -94,6 +105,7 @@ final class GameStore: ObservableObject {
         migrateHintPreferencesIfNeeded(restoredSnapshot: restoredSnapshot)
         normalizeOptions()
         refreshBestMove()
+        refreshDiceMode(autoSelectSingle: false)
         Task { await persistSnapshot() }
     }
 
@@ -130,6 +142,14 @@ final class GameStore: ObservableObject {
         Task { await persistSnapshot() }
     }
 
+    func setDieMode(_ mode: DiceMode) {
+        let allowSingle = GameLogic.shouldUseOneDie(rule: options.oneDieRule, tiles: tiles)
+        let resolvedMode: DiceMode = allowSingle ? mode : .double
+        guard dieMode != resolvedMode else { return }
+        dieMode = resolvedMode
+        Task { await persistSnapshot() }
+    }
+
     func updateOptions(_ update: (inout GameOptions) -> Void) {
         update(&options)
         normalizeOptions()
@@ -143,6 +163,7 @@ final class GameStore: ObservableObject {
             showLearning = false
         }
         refreshBestMove()
+        refreshDiceMode(autoSelectSingle: true)
         Task { await persistSnapshot() }
     }
 
@@ -190,6 +211,7 @@ final class GameStore: ObservableObject {
         turnLogs.removeAll()
         showInstructions = false
         showWinners = false
+        refreshDiceMode(autoSelectSingle: false)
         Task { await persistSnapshot() }
     }
 
@@ -210,6 +232,7 @@ final class GameStore: ObservableObject {
         completedRoundScore = nil
         completedRoundRoll = nil
         lastRolledDice = nil
+        refreshDiceMode(autoSelectSingle: false)
         for idx in players.indices {
             players[idx].lastScore = 0
             players[idx].totalScore = 0
@@ -222,7 +245,12 @@ final class GameStore: ObservableObject {
         if phase != .playing {
             startGame()
         }
-        let nextRoll = value ?? GameLogic.generateRoll(using: options, tiles: tiles, preferredRiggedRoll: riggedRoll)
+        let nextRoll = value ?? GameLogic.generateRoll(
+            using: options,
+            tiles: tiles,
+            preferredRiggedRoll: riggedRoll,
+            dieMode: activeDieMode
+        )
         riggedRoll = nil
         pendingRoll = nextRoll
         lastRolledDice = nextRoll
@@ -270,6 +298,7 @@ final class GameStore: ObservableObject {
         recordLog(message: "Closed tiles \(closedValues.map(String.init).joined(separator: ", "))", event: .move)
         pendingRoll = DiceRoll()
         refreshBestMove()
+        refreshDiceMode(autoSelectSingle: true)
 
         if GameLogic.isBoxShut(tiles: tiles) {
             completeTurn(score: 0, tilesClosed: options.maxTile, didShut: true, resolution: .shut)
@@ -383,6 +412,7 @@ final class GameStore: ObservableObject {
         completedRoundRoll = lastRolledDice
         scheduleAutoRetryIfNeeded(showingPopup: shouldShowPopup, didShut: true)
         lastRolledDice = nil
+        refreshDiceMode(autoSelectSingle: false)
         Task { await persistSnapshot() }
     }
 
@@ -398,6 +428,7 @@ final class GameStore: ObservableObject {
         completedRoundRoll = nil
         lastRolledDice = nil
         currentPlayerIndex = (currentPlayerIndex + 1) % players.count
+        refreshDiceMode(autoSelectSingle: false)
     }
 
     private func finalizeRound(lastTurnTiles: [Tile], score: Int) {
@@ -418,6 +449,7 @@ final class GameStore: ObservableObject {
         currentRoundScores.removeAll()
         pendingRoll = DiceRoll()
         lastRolledDice = nil
+        refreshDiceMode(autoSelectSingle: false)
         Task { await persistSnapshot() }
     }
 
@@ -464,6 +496,18 @@ final class GameStore: ObservableObject {
         bestMove = GameLogic.bestMove(for: pendingRoll, tiles: tiles)
     }
 
+    private func refreshDiceMode(autoSelectSingle: Bool) {
+        let allowSingle = GameLogic.shouldUseOneDie(rule: options.oneDieRule, tiles: tiles)
+        if !allowSingle {
+            if dieMode != .double {
+                dieMode = .double
+            }
+        } else if autoSelectSingle && !lastSingleDieAvailability && dieMode == .double {
+            dieMode = .single
+        }
+        lastSingleDieAvailability = allowSingle
+    }
+
     private func normalizeOptions() {
         if options.scoringMode == .instantWin {
             options.instantWinOnShut = true
@@ -484,6 +528,7 @@ final class GameStore: ObservableObject {
                 options.cheatCodes.insert(.madness)
             }
             tiles = GameLogic.initialTiles(range: options.tileRange)
+            refreshDiceMode(autoSelectSingle: false)
         case .full:
             updateOptions { options in
                 options.cheatCodes.insert(.full)
@@ -514,6 +559,7 @@ final class GameStore: ObservableObject {
             phase: phase,
             currentPlayerId: activePlayer?.id,
             pendingRoll: pendingRoll,
+            dieMode: dieMode,
             turnLogs: turnLogs,
             winners: winners,
             round: round,

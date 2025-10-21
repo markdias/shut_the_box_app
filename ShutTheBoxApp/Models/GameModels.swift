@@ -27,11 +27,27 @@ enum OneDieRule: String, Codable, CaseIterable, Identifiable {
     var helpText: String {
         switch self {
         case .afterTopTilesShut:
-            return "Switch to a single die once tiles 7–9 are closed."
+            return "A single die becomes available once tiles 7–9 are closed. Use the toggle under the dice to keep rolling two."
         case .whenRemainderLessThanSix:
-            return "Use a single die when the sum of open tiles is under six."
+            return "A single die becomes available when the sum of open tiles is under six. Use the toggle under the dice to keep rolling two."
         case .never:
             return "Always roll two dice."
+        }
+    }
+}
+
+enum DiceMode: String, Codable, CaseIterable, Identifiable {
+    case single
+    case double
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .single:
+            return "1 Die"
+        case .double:
+            return "2 Dice"
         }
     }
 }
@@ -274,6 +290,7 @@ struct GameSettingsSnapshot: Codable {
     var phase: GamePhase
     var currentPlayerId: UUID?
     var pendingRoll: DiceRoll
+    var dieMode: DiceMode = .double
     var turnLogs: [TurnLog]
     var winners: [WinnerSummary]
     var round: Int

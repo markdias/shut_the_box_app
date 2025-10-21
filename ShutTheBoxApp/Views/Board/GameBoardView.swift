@@ -90,8 +90,10 @@ struct DiceTrayView: View {
                             )
                         } else {
                             HStack(spacing: 16) {
-                                DiceView(value: store.pendingRoll.first, size: isCompact ? 96 : 120)
-                                DiceView(value: store.pendingRoll.second, size: isCompact ? 96 : 120)
+                                DiceView(value: store.pendingRoll.first, size: dieSize)
+                                if showSecondDie {
+                                    DiceView(value: store.pendingRoll.second, size: dieSize)
+                                }
                             }
                         }
                     }
@@ -105,6 +107,11 @@ struct DiceTrayView: View {
                 .accessibilityAddTraits(.isButton)
             }
             .animation(.easeInOut(duration: 0.25), value: showBoxNotShutBanner)
+
+            if store.canAdjustDieMode {
+                DiceModeToggle(isCompact: isCompact)
+                    .transition(.opacity)
+            }
 
             if store.phase == .roundComplete {
                 if let rollSummary = finalRoundRollSummary {
@@ -128,7 +135,7 @@ struct DiceTrayView: View {
                     .foregroundColor(.white.opacity(0.7))
             }
 
-            if store.pendingRoll.total > 0 {
+            if shouldShowOneDieHelp {
                 Text(store.options.oneDieRule.helpText)
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.6))
@@ -145,6 +152,16 @@ struct DiceTrayView: View {
         case .roundComplete:
             return !store.showWinners
         }
+    }
+
+    private var dieSize: CGFloat { isCompact ? 96 : 120 }
+
+    private var showSecondDie: Bool {
+        store.activeDieMode == .double || store.pendingRoll.second != nil
+    }
+
+    private var shouldShowOneDieHelp: Bool {
+        store.pendingRoll.total > 0 || store.canAdjustDieMode
     }
 
     private var finalRoundRoll: DiceRoll? {
@@ -201,7 +218,8 @@ struct DiceTrayView: View {
             return Text("Tap to start the game by rolling the dice")
         case .playing:
             if canRoll {
-                return Text("Tap to roll the dice again")
+                let modeDescription = store.activeDieMode == .single ? "one die" : "two dice"
+                return Text("Tap to roll \(modeDescription) again")
             }
             return Text("Resolve the current selection before rolling again")
         case .roundComplete:
@@ -274,6 +292,37 @@ private struct DidNotShutBanner: View {
         .shadow(color: Color.red.opacity(0.45), radius: 16, x: 0, y: 10)
         .padding(.horizontal, 4)
         .allowsHitTesting(false)
+    }
+}
+
+private struct DiceModeToggle: View {
+    @EnvironmentObject private var store: GameStore
+    let isCompact: Bool
+
+    private var selection: Binding<DiceMode> {
+        Binding(
+            get: { store.dieMode },
+            set: { store.setDieMode($0) }
+        )
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Dice mode")
+                .font(.caption.weight(.semibold))
+                .foregroundColor(.white.opacity(0.7))
+
+            Picker("Dice mode", selection: selection) {
+                ForEach(DiceMode.allCases) { mode in
+                    Text(mode.title).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(maxWidth: .infinity)
+            .tint(Color.white.opacity(0.85))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityLabel("Choose how many dice to roll")
     }
 }
 
