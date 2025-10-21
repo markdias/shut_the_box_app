@@ -56,6 +56,8 @@ Cheat codes perform extra tasks:
 
 Double tapping tile 12 also primes a secret forced double-six on the next roll.
 
+Hit the **Reset** header action at any time to clear all active cheat effects, disable auto-retry, hide the code tools, and restore the board to its default starting state.
+
 ## Player management & history
 
 - Manage the hot-seat roster from **Settings → Players**, adding or removing participants, renaming them inline, and toggling per-player hints.
