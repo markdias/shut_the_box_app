@@ -29,7 +29,7 @@ ShutTheBoxApp/
 
 - **Setup** – Configure options, add players, and keep the scoreboard from previous sessions thanks to `UserDefaults` persistence that mirrors the original web client's localStorage snapshot.
 - **Turn loop** – Rolling automatically picks two dice unless the one-die rule allows a single die and kick-starts new rounds on the first tap. Players build multi-tile selections whose totals must match the roll; valid sums now close the tiles instantly so the dice prompt the next roll without a confirmation bar.
-- **Round resolution** – Rounds end once all players have no legal moves. The winner modal lists every player, highlights ties, and honours the instant-win-on-shut rule for zero scores. Solo practice now swaps the modal for a "Did not shut the box" status banner above the dice whenever tiles remain open, and a quick tap on the dice launches the next round once you're ready.
+- **Round resolution** – Rounds end once all players have no legal moves. The winner modal lists every player, highlights ties, and honours the instant-win-on-shut rule for zero scores. Solo practice now swaps the modal for a "Did not shut the box" status banner above the dice whenever tiles remain open. The board now stays frozen at the end of a round so you can review the closed tiles, the dice keep the last roll's pip faces in the new mint accent until you tap them to reset for the next round, and the leftover score sits just beneath the tray for quick reference.
 - **Instructions overlay** – "How to Play" opens an accessible modal that summarises the rules and assists new players without leaving the app.
 
 ## Rules & scoring configuration
@@ -85,7 +85,7 @@ The active learning game persists so returning to the board is a single tap.
 ## User interface & responsiveness
 
 - The mobile header condenses into a menu and status toggle while desktop keeps settings and history buttons inline.
-- Dice tray animations react to rolls, the dice faces render classic pip layouts instead of numerals, and the dice themselves are now the roll trigger—your first tap starts the round, so there's no Start Game button to chase.
+- Dice tray animations react to rolls, the dice faces render classic pip layouts in the refreshed mint hue instead of numerals, and the dice themselves are now the roll trigger—your first tap starts the round, so there's no Start Game button to chase.
 - Neon attention glows wrap the dice tray when it's time to roll or restart and surround the tile grid while resolving the active combination so the next action is unmistakable.
 - Status chips display round, phase, active player, roster size, previous winners, and hint status when enabled.
 - Progress cards show tiles closed, selected totals, available combinations, and completion percentage, while toast notifications announce next turns.

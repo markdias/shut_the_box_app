@@ -21,6 +21,8 @@ final class GameStore: ObservableObject {
     @Published private(set) var showInstructions: Bool = false
     @Published private(set) var showWinners: Bool = false
     @Published private(set) var bestMove: [Tile] = []
+    @Published private(set) var completedRoundScore: Int?
+    @Published private(set) var completedRoundRoll: DiceRoll?
     @Published var cheatInput: String = ""
     @Published private(set) var autoPlayEnabled: Bool = false
 
@@ -44,6 +46,7 @@ final class GameStore: ObservableObject {
     private var riggedRoll: DiceRoll?
     private var currentRoundScores: [UUID: RoundScore]
     private var hasMigratedHintPreferences: Bool = false
+    private var lastRolledDice: DiceRoll?
 
     private enum TurnResolution {
         case bust
@@ -68,6 +71,9 @@ final class GameStore: ObservableObject {
             self.winners = snapshot.winners
             self.previousWinner = snapshot.previousWinner
             self.currentRoundScores = snapshot.currentRoundScores
+            self.completedRoundScore = snapshot.completedRoundScore
+            self.completedRoundRoll = snapshot.completedRoundRoll
+            self.lastRolledDice = snapshot.completedRoundRoll ?? (snapshot.pendingRoll.total > 0 ? snapshot.pendingRoll : nil)
         } else {
             self.options = .default
             self.players = [Player(name: "Player 1"), Player(name: "Player 2")]
@@ -80,6 +86,9 @@ final class GameStore: ObservableObject {
             self.winners = []
             self.previousWinner = nil
             self.currentRoundScores = [:]
+            self.completedRoundScore = nil
+            self.completedRoundRoll = nil
+            self.lastRolledDice = nil
         }
 
         migrateHintPreferencesIfNeeded(restoredSnapshot: restoredSnapshot)
@@ -127,6 +136,8 @@ final class GameStore: ObservableObject {
         if phase != .playing {
             tiles = GameLogic.initialTiles(range: options.tileRange)
             pendingRoll = DiceRoll()
+            lastRolledDice = nil
+            completedRoundRoll = nil
         }
         if !options.showLearningGames {
             showLearning = false
@@ -173,6 +184,9 @@ final class GameStore: ObservableObject {
         tiles = GameLogic.initialTiles(range: options.tileRange)
         pendingRoll = DiceRoll()
         bestMove = []
+        completedRoundScore = nil
+        completedRoundRoll = nil
+        lastRolledDice = nil
         turnLogs.removeAll()
         showInstructions = false
         showWinners = false
@@ -193,6 +207,9 @@ final class GameStore: ObservableObject {
         currentRoundScores.removeAll()
         autoPlayEnabled = false
         showLearning = false
+        completedRoundScore = nil
+        completedRoundRoll = nil
+        lastRolledDice = nil
         for idx in players.indices {
             players[idx].lastScore = 0
             players[idx].totalScore = 0
@@ -208,6 +225,8 @@ final class GameStore: ObservableObject {
         let nextRoll = value ?? GameLogic.generateRoll(using: options, tiles: tiles, preferredRiggedRoll: riggedRoll)
         riggedRoll = nil
         pendingRoll = nextRoll
+        lastRolledDice = nextRoll
+        completedRoundRoll = nil
         refreshBestMove()
         recordLog(message: "Rolled \(nextRoll.valuesDescription)", event: .roll)
 
@@ -314,6 +333,8 @@ final class GameStore: ObservableObject {
 
     private func completeTurn(score: Int, tilesClosed: Int, didShut: Bool, resolution: TurnResolution) {
         guard let player = activePlayer else { return }
+        let lastTurnTiles = tiles
+
         var updatedPlayer = player
         updatedPlayer.lastScore = score
         updatedPlayer.totalScore += score
@@ -325,8 +346,6 @@ final class GameStore: ObservableObject {
 
         currentRoundScores[player.id] = RoundScore(score: score, tilesShut: tilesClosed)
         bestMove = []
-        pendingRoll = DiceRoll()
-        tiles = GameLogic.initialTiles(range: options.tileRange)
 
         switch resolution {
         case .bust:
@@ -340,15 +359,15 @@ final class GameStore: ObservableObject {
         }
 
         if options.instantWinOnShut && didShut {
-            finalizeInstantWin(for: updatedPlayer, tilesClosed: tilesClosed)
+            finalizeInstantWin(for: updatedPlayer, tilesClosed: tilesClosed, lastTurnTiles: lastTurnTiles, score: score)
             return
         }
 
-        advanceToNextPlayerOrFinalize()
+        advanceToNextPlayerOrFinalize(lastTurnTiles: lastTurnTiles, score: score)
         Task { await persistSnapshot() }
     }
 
-    private func finalizeInstantWin(for player: Player, tilesClosed: Int) {
+    private func finalizeInstantWin(for player: Player, tilesClosed: Int, lastTurnTiles: [Tile], score: Int) {
         let summary = WinnerSummary(playerName: player.name, score: 0, tilesShut: tilesClosed)
         winners = [summary]
         previousWinner = summary
@@ -358,24 +377,36 @@ final class GameStore: ObservableObject {
         round += 1
         currentRoundScores.removeAll()
         currentPlayerIndex = 0
+        tiles = lastTurnTiles
         pendingRoll = DiceRoll()
+        completedRoundScore = score
+        completedRoundRoll = lastRolledDice
         scheduleAutoRetryIfNeeded(showingPopup: shouldShowPopup, didShut: true)
+        lastRolledDice = nil
         Task { await persistSnapshot() }
     }
 
-    private func advanceToNextPlayerOrFinalize() {
+    private func advanceToNextPlayerOrFinalize(lastTurnTiles: [Tile], score: Int) {
         if currentRoundScores.count >= players.count {
-            finalizeRound()
+            finalizeRound(lastTurnTiles: lastTurnTiles, score: score)
             return
         }
 
+        tiles = GameLogic.initialTiles(range: options.tileRange)
+        pendingRoll = DiceRoll()
+        completedRoundScore = nil
+        completedRoundRoll = nil
+        lastRolledDice = nil
         currentPlayerIndex = (currentPlayerIndex + 1) % players.count
     }
 
-    private func finalizeRound() {
+    private func finalizeRound(lastTurnTiles: [Tile], score: Int) {
         phase = .roundComplete
         round += 1
         currentPlayerIndex = 0
+        tiles = lastTurnTiles
+        completedRoundScore = score
+        completedRoundRoll = lastRolledDice
 
         let summaries = roundSummaries()
         winners = summaries
@@ -386,6 +417,7 @@ final class GameStore: ObservableObject {
         scheduleAutoRetryIfNeeded(showingPopup: shouldShowPopup, didShut: singlePlayerShutBox)
         currentRoundScores.removeAll()
         pendingRoll = DiceRoll()
+        lastRolledDice = nil
         Task { await persistSnapshot() }
     }
 
@@ -487,7 +519,9 @@ final class GameStore: ObservableObject {
             round: round,
             previousWinner: previousWinner,
             theme: ThemeManager.persistedTheme(),
-            currentRoundScores: currentRoundScores
+            currentRoundScores: currentRoundScores,
+            completedRoundScore: completedRoundScore,
+            completedRoundRoll: completedRoundRoll
         )
         storage.persist(snapshot, key: .snapshot)
     }
