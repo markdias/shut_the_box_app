@@ -281,6 +281,7 @@ struct GameSettingsSnapshot: Codable {
     var theme: ThemeOption
     var currentRoundScores: [UUID: RoundScore] = [:]
     var completedRoundScore: Int?
+    var completedRoundRoll: DiceRoll?
 }
 
 extension GameOptions {

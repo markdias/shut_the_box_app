@@ -82,8 +82,12 @@ struct DiceTrayView: View {
 
                 Button(action: { store.rollDice() }) {
                     Group {
-                        if let score = finalRoundScore {
-                            ScoreDicePair(score: score, size: isCompact ? 96 : 120)
+                        if store.phase == .roundComplete {
+                            CompletedRoundDiceView(
+                                roll: finalRoundRoll,
+                                score: finalRoundScore,
+                                size: isCompact ? 96 : 120
+                            )
                         } else {
                             HStack(spacing: 16) {
                                 DiceView(value: store.pendingRoll.first, size: isCompact ? 96 : 120)
@@ -101,6 +105,22 @@ struct DiceTrayView: View {
                 .accessibilityAddTraits(.isButton)
             }
             .animation(.easeInOut(duration: 0.25), value: showBoxNotShutBanner)
+
+            if store.phase == .roundComplete {
+                if let rollSummary = finalRoundRollSummary {
+                    Text("Last roll: \(rollSummary)")
+                        .font(.callout.weight(.semibold))
+                        .foregroundColor(.white.opacity(0.85))
+                        .transition(.opacity)
+                }
+
+                if let score = finalRoundScore {
+                    Text("Round score: \(score)")
+                        .font(.title2.weight(.bold))
+                        .foregroundColor(.white)
+                        .transition(.opacity)
+                }
+            }
 
             if let helperText = nextActionMessage {
                 Text(helperText)
@@ -127,9 +147,22 @@ struct DiceTrayView: View {
         }
     }
 
+    private var finalRoundRoll: DiceRoll? {
+        guard store.phase == .roundComplete else { return nil }
+        return store.completedRoundRoll
+    }
+
     private var finalRoundScore: Int? {
         guard store.phase == .roundComplete else { return nil }
         return store.completedRoundScore
+    }
+
+    private var finalRoundRollSummary: String? {
+        finalRoundRoll?.equationDescription
+    }
+
+    private var finalRoundRollSpeech: String? {
+        finalRoundRoll?.spokenDescription
     }
 
     private var trayTitle: String {
@@ -173,12 +206,12 @@ struct DiceTrayView: View {
             return Text("Resolve the current selection before rolling again")
         case .roundComplete:
             if canRoll {
-                return Text("Tap to start the next round")
+                return finalRoundAccessibilityLabel(action: "Tap to start the next round")
             }
             if store.showWinners {
-                return Text("Close the results summary before starting the next round")
+                return finalRoundAccessibilityLabel(action: "Close the results summary before starting the next round")
             }
-            return Text("Wait for the next round to begin")
+            return finalRoundAccessibilityLabel(action: "Wait for the next round to begin")
         }
     }
 
@@ -189,6 +222,26 @@ struct DiceTrayView: View {
     }
 
     private var bannerClearance: CGFloat { isCompact ? 44 : 52 }
+
+    private func finalRoundAccessibilityLabel(action: String) -> Text {
+        var components: [String] = []
+
+        if let rollSpeech = finalRoundRollSpeech,
+           let roll = finalRoundRoll,
+           !roll.values.isEmpty {
+            var description = "Last roll showing \(rollSpeech)"
+            description += " for a total of \(roll.total)"
+            components.append(description)
+        }
+
+        if let score = finalRoundScore {
+            components.append("Round score \(score)")
+        }
+
+        components.append(action)
+
+        return Text(components.joined(separator: ". ") + ".")
+    }
 }
 
 private struct DidNotShutBanner: View {
@@ -272,35 +325,59 @@ struct DiceView: View {
     }
 }
 
-private struct ScoreDicePair: View {
-    let score: Int
+private struct CompletedRoundDiceView: View {
+    let roll: DiceRoll?
+    let score: Int?
     let size: CGFloat
 
-    private var digitValues: [Int?] {
-        let digits = Array(String(abs(score))).compactMap { Int(String($0)) }
-        if digits.isEmpty {
-            return [nil, 0]
+    private var faceValues: [Int?] {
+        guard let roll = roll else { return [nil, nil] }
+        let values = roll.values
+        if values.count >= 2 {
+            return Array(values.prefix(2)).map { Optional($0) }
         }
-        if digits.count == 1 {
-            return [nil, digits[0]]
+        if let first = values.first {
+            return [first, nil]
         }
-        return digits.map { Optional($0) }
+        return [nil, nil]
     }
 
     var body: some View {
-        let values = digitValues
+        let faces = faceValues
         HStack(spacing: 16) {
-            ForEach(Array(values.enumerated()), id: \.offset) { entry in
-                ScoreDieView(digit: entry.element, size: size)
+            ForEach(Array(faces.enumerated()), id: \.offset) { entry in
+                CompletedRoundDieFace(value: entry.element, size: size)
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("Last score \(score)"))
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private var accessibilityLabel: Text {
+        var components: [String] = []
+
+        if let roll = roll,
+           !roll.values.isEmpty,
+           let spoken = roll.spokenDescription {
+            var description = "Last roll showing \(spoken)"
+            description += " for a total of \(roll.total)"
+            components.append(description)
+        }
+
+        if let score = score {
+            components.append("Round score \(score)")
+        }
+
+        if components.isEmpty {
+            components.append("Review the last roll")
+        }
+
+        return Text(components.joined(separator: ". ") + ".")
     }
 }
 
-private struct ScoreDieView: View {
-    let digit: Int?
+private struct CompletedRoundDieFace: View {
+    let value: Int?
     let size: CGFloat
 
     var body: some View {
@@ -319,14 +396,14 @@ private struct ScoreDieView: View {
                         .stroke(Color.white.opacity(0.28), lineWidth: 1.5)
                 )
 
-            if let digit {
-                DicePipView(value: digit)
+            if let value, (1...6).contains(value) {
+                DicePipView(value: value)
                     .frame(width: size * 0.7, height: size * 0.7)
             }
         }
         .frame(width: size, height: size)
         .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 14)
-        .opacity(digit == nil ? 0.55 : 1)
+        .opacity((value == nil) ? 0.45 : 1)
         .accessibilityHidden(true)
     }
 }
@@ -334,17 +411,9 @@ private struct ScoreDieView: View {
 private struct DicePipView: View {
     let value: Int
 
+    private static let pipColor = Color(red: 0.93, green: 0.99, blue: 0.90)
+
     private static let pipPositions: [Int: [CGPoint]] = [
-        0: [
-            CGPoint(x: 0.25, y: 0.25),
-            CGPoint(x: 0.5, y: 0.25),
-            CGPoint(x: 0.75, y: 0.25),
-            CGPoint(x: 0.25, y: 0.5),
-            CGPoint(x: 0.75, y: 0.5),
-            CGPoint(x: 0.25, y: 0.75),
-            CGPoint(x: 0.5, y: 0.75),
-            CGPoint(x: 0.75, y: 0.75)
-        ],
         1: [CGPoint(x: 0.5, y: 0.5)],
         2: [CGPoint(x: 0.25, y: 0.25), CGPoint(x: 0.75, y: 0.75)],
         3: [CGPoint(x: 0.25, y: 0.25), CGPoint(x: 0.5, y: 0.5), CGPoint(x: 0.75, y: 0.75)],
@@ -363,59 +432,53 @@ private struct DicePipView: View {
             CGPoint(x: 0.75, y: 0.5),
             CGPoint(x: 0.25, y: 0.75),
             CGPoint(x: 0.75, y: 0.75)
-        ],
-        7: [
-            CGPoint(x: 0.25, y: 0.25),
-            CGPoint(x: 0.75, y: 0.25),
-            CGPoint(x: 0.25, y: 0.5),
-            CGPoint(x: 0.75, y: 0.5),
-            CGPoint(x: 0.25, y: 0.75),
-            CGPoint(x: 0.75, y: 0.75),
-            CGPoint(x: 0.5, y: 0.5)
-        ],
-        8: [
-            CGPoint(x: 0.25, y: 0.25),
-            CGPoint(x: 0.5, y: 0.25),
-            CGPoint(x: 0.75, y: 0.25),
-            CGPoint(x: 0.25, y: 0.5),
-            CGPoint(x: 0.5, y: 0.5),
-            CGPoint(x: 0.75, y: 0.5),
-            CGPoint(x: 0.25, y: 0.75),
-            CGPoint(x: 0.75, y: 0.75)
-        ],
-        9: [
-            CGPoint(x: 0.25, y: 0.25),
-            CGPoint(x: 0.5, y: 0.25),
-            CGPoint(x: 0.75, y: 0.25),
-            CGPoint(x: 0.25, y: 0.5),
-            CGPoint(x: 0.5, y: 0.5),
-            CGPoint(x: 0.75, y: 0.5),
-            CGPoint(x: 0.25, y: 0.75),
-            CGPoint(x: 0.5, y: 0.75),
-            CGPoint(x: 0.75, y: 0.75)
         ]
     ]
 
     var body: some View {
         GeometryReader { proxy in
             let size = min(proxy.size.width, proxy.size.height)
-            let positions = Self.pipPositions[value, default: []]
-            let pipCount = positions.count
-            let pipSize = size * (pipCount >= 8 ? 0.16 : pipCount >= 7 ? 0.18 : 0.2)
-            ZStack {
-                ForEach(Array(positions.enumerated()), id: \.offset) { entry in
-                    let position = entry.element
-                    Circle()
-                        .fill(Color.white)
-                        .shadow(color: .black.opacity(0.25), radius: pipSize * 0.4, x: 0, y: pipSize * 0.2)
-                        .frame(width: pipSize, height: pipSize)
-                        .position(
-                            x: proxy.size.width * position.x,
-                            y: proxy.size.height * position.y
-                        )
+            if let positions = Self.pipPositions[value] {
+                let pipSize = size * 0.2
+                ZStack {
+                    ForEach(Array(positions.enumerated()), id: \.offset) { entry in
+                        let position = entry.element
+                        Circle()
+                            .fill(Self.pipColor)
+                            .shadow(color: .black.opacity(0.25), radius: pipSize * 0.4, x: 0, y: pipSize * 0.2)
+                            .frame(width: pipSize, height: pipSize)
+                            .position(
+                                x: proxy.size.width * position.x,
+                                y: proxy.size.height * position.y
+                            )
+                    }
                 }
             }
         }
+    }
+}
+
+private extension DiceRoll {
+    var spokenDescription: String? {
+        switch values.count {
+        case 2:
+            return "\(values[0]) and \(values[1])"
+        case 1:
+            if let first = values.first { return "\(first)" }
+            return nil
+        default:
+            return nil
+        }
+    }
+
+    var equationDescription: String? {
+        let faces = values
+        guard !faces.isEmpty else { return nil }
+        let joined = faces.map(String.init).joined(separator: " + ")
+        if faces.count > 1 {
+            return "\(joined) = \(faces.reduce(0, +))"
+        }
+        return joined
     }
 }
 
