@@ -216,6 +216,11 @@ final class GameStore: ObservableObject {
     }
 
     func resetGame() {
+        options.applyCheatCodes([])
+        options.autoRetry = false
+        options.showCodeTools = false
+        normalizeOptions()
+
         tiles = GameLogic.initialTiles(range: options.tileRange)
         phase = .setup
         round = 1
@@ -228,6 +233,8 @@ final class GameStore: ObservableObject {
         bestMove = []
         currentRoundScores.removeAll()
         autoPlayEnabled = false
+        cheatInput = ""
+        showHints = false
         showLearning = false
         completedRoundScore = nil
         completedRoundRoll = nil
