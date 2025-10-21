@@ -276,22 +276,23 @@ private struct ScoreDicePair: View {
     let score: Int
     let size: CGFloat
 
-    private var digitSegments: (leading: String, trailing: String) {
-        let absolute = abs(score)
-        let scoreText = String(absolute)
-        guard scoreText.count > 1 else {
-            return ("", scoreText)
+    private var digitValues: [Int?] {
+        let digits = Array(String(abs(score))).compactMap { Int(String($0)) }
+        if digits.isEmpty {
+            return [nil, 0]
         }
-        let leading = String(scoreText.dropLast())
-        let trailing = String(scoreText.suffix(1))
-        return (leading, trailing)
+        if digits.count == 1 {
+            return [nil, digits[0]]
+        }
+        return digits.map { Optional($0) }
     }
 
     var body: some View {
-        let segments = digitSegments
+        let values = digitValues
         HStack(spacing: 16) {
-            ScoreDieView(text: segments.leading, size: size)
-            ScoreDieView(text: segments.trailing, size: size)
+            ForEach(Array(values.enumerated()), id: \.offset) { entry in
+                ScoreDieView(digit: entry.element, size: size)
+            }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("Last score \(score)"))
@@ -299,7 +300,7 @@ private struct ScoreDicePair: View {
 }
 
 private struct ScoreDieView: View {
-    let text: String
+    let digit: Int?
     let size: CGFloat
 
     var body: some View {
@@ -318,12 +319,15 @@ private struct ScoreDieView: View {
                         .stroke(Color.white.opacity(0.28), lineWidth: 1.5)
                 )
 
-            Text(text.isEmpty ? " " : text)
-                .font(.system(size: size * 0.38, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
+            if let digit {
+                DicePipView(value: digit)
+                    .frame(width: size * 0.7, height: size * 0.7)
+            }
         }
         .frame(width: size, height: size)
         .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 14)
+        .opacity(digit == nil ? 0.55 : 1)
+        .accessibilityHidden(true)
     }
 }
 
@@ -331,19 +335,73 @@ private struct DicePipView: View {
     let value: Int
 
     private static let pipPositions: [Int: [CGPoint]] = [
+        0: [
+            CGPoint(x: 0.25, y: 0.25),
+            CGPoint(x: 0.5, y: 0.25),
+            CGPoint(x: 0.75, y: 0.25),
+            CGPoint(x: 0.25, y: 0.5),
+            CGPoint(x: 0.75, y: 0.5),
+            CGPoint(x: 0.25, y: 0.75),
+            CGPoint(x: 0.5, y: 0.75),
+            CGPoint(x: 0.75, y: 0.75)
+        ],
         1: [CGPoint(x: 0.5, y: 0.5)],
         2: [CGPoint(x: 0.25, y: 0.25), CGPoint(x: 0.75, y: 0.75)],
         3: [CGPoint(x: 0.25, y: 0.25), CGPoint(x: 0.5, y: 0.5), CGPoint(x: 0.75, y: 0.75)],
         4: [CGPoint(x: 0.25, y: 0.25), CGPoint(x: 0.75, y: 0.25), CGPoint(x: 0.25, y: 0.75), CGPoint(x: 0.75, y: 0.75)],
-        5: [CGPoint(x: 0.25, y: 0.25), CGPoint(x: 0.75, y: 0.25), CGPoint(x: 0.5, y: 0.5), CGPoint(x: 0.25, y: 0.75), CGPoint(x: 0.75, y: 0.75)],
-        6: [CGPoint(x: 0.25, y: 0.25), CGPoint(x: 0.75, y: 0.25), CGPoint(x: 0.25, y: 0.5), CGPoint(x: 0.75, y: 0.5), CGPoint(x: 0.25, y: 0.75), CGPoint(x: 0.75, y: 0.75)]
+        5: [
+            CGPoint(x: 0.25, y: 0.25),
+            CGPoint(x: 0.75, y: 0.25),
+            CGPoint(x: 0.5, y: 0.5),
+            CGPoint(x: 0.25, y: 0.75),
+            CGPoint(x: 0.75, y: 0.75)
+        ],
+        6: [
+            CGPoint(x: 0.25, y: 0.25),
+            CGPoint(x: 0.75, y: 0.25),
+            CGPoint(x: 0.25, y: 0.5),
+            CGPoint(x: 0.75, y: 0.5),
+            CGPoint(x: 0.25, y: 0.75),
+            CGPoint(x: 0.75, y: 0.75)
+        ],
+        7: [
+            CGPoint(x: 0.25, y: 0.25),
+            CGPoint(x: 0.75, y: 0.25),
+            CGPoint(x: 0.25, y: 0.5),
+            CGPoint(x: 0.75, y: 0.5),
+            CGPoint(x: 0.25, y: 0.75),
+            CGPoint(x: 0.75, y: 0.75),
+            CGPoint(x: 0.5, y: 0.5)
+        ],
+        8: [
+            CGPoint(x: 0.25, y: 0.25),
+            CGPoint(x: 0.5, y: 0.25),
+            CGPoint(x: 0.75, y: 0.25),
+            CGPoint(x: 0.25, y: 0.5),
+            CGPoint(x: 0.5, y: 0.5),
+            CGPoint(x: 0.75, y: 0.5),
+            CGPoint(x: 0.25, y: 0.75),
+            CGPoint(x: 0.75, y: 0.75)
+        ],
+        9: [
+            CGPoint(x: 0.25, y: 0.25),
+            CGPoint(x: 0.5, y: 0.25),
+            CGPoint(x: 0.75, y: 0.25),
+            CGPoint(x: 0.25, y: 0.5),
+            CGPoint(x: 0.5, y: 0.5),
+            CGPoint(x: 0.75, y: 0.5),
+            CGPoint(x: 0.25, y: 0.75),
+            CGPoint(x: 0.5, y: 0.75),
+            CGPoint(x: 0.75, y: 0.75)
+        ]
     ]
 
     var body: some View {
         GeometryReader { proxy in
             let size = min(proxy.size.width, proxy.size.height)
-            let pipSize = size * 0.2
             let positions = Self.pipPositions[value, default: []]
+            let pipCount = positions.count
+            let pipSize = size * (pipCount >= 8 ? 0.16 : pipCount >= 7 ? 0.18 : 0.2)
             ZStack {
                 ForEach(Array(positions.enumerated()), id: \.offset) { entry in
                     let position = entry.element
@@ -360,6 +418,7 @@ private struct DicePipView: View {
         }
     }
 }
+
 
 struct TileGridView: View {
     @EnvironmentObject private var store: GameStore
