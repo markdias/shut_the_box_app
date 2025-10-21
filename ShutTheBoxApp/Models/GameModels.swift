@@ -27,11 +27,27 @@ enum OneDieRule: String, Codable, CaseIterable, Identifiable {
     var helpText: String {
         switch self {
         case .afterTopTilesShut:
-            return "Switch to a single die once tiles 7–9 are closed."
+            return "A single die becomes available once tiles 7–9 are closed. Use the toggle under the dice to keep rolling two."
         case .whenRemainderLessThanSix:
-            return "Use a single die when the sum of open tiles is under six."
+            return "A single die becomes available when the sum of open tiles is under six. Use the toggle under the dice to keep rolling two."
         case .never:
             return "Always roll two dice."
+        }
+    }
+}
+
+enum DiceMode: String, Codable, CaseIterable, Identifiable {
+    case single
+    case double
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .single:
+            return "1 Die"
+        case .double:
+            return "2 Dice"
         }
     }
 }
@@ -274,6 +290,7 @@ struct GameSettingsSnapshot: Codable {
     var phase: GamePhase
     var currentPlayerId: UUID?
     var pendingRoll: DiceRoll
+    var dieMode: DiceMode = .double
     var turnLogs: [TurnLog]
     var winners: [WinnerSummary]
     var round: Int
@@ -282,6 +299,96 @@ struct GameSettingsSnapshot: Codable {
     var currentRoundScores: [UUID: RoundScore] = [:]
     var completedRoundScore: Int?
     var completedRoundRoll: DiceRoll?
+
+    private enum CodingKeys: String, CodingKey {
+        case options
+        case players
+        case tiles
+        case phase
+        case currentPlayerId
+        case pendingRoll
+        case dieMode
+        case turnLogs
+        case winners
+        case round
+        case previousWinner
+        case theme
+        case currentRoundScores
+        case completedRoundScore
+        case completedRoundRoll
+    }
+
+    init(
+        options: GameOptions,
+        players: [Player],
+        tiles: [Tile],
+        phase: GamePhase,
+        currentPlayerId: UUID?,
+        pendingRoll: DiceRoll,
+        dieMode: DiceMode = .double,
+        turnLogs: [TurnLog],
+        winners: [WinnerSummary],
+        round: Int,
+        previousWinner: WinnerSummary?,
+        theme: ThemeOption,
+        currentRoundScores: [UUID: RoundScore] = [:],
+        completedRoundScore: Int?,
+        completedRoundRoll: DiceRoll?
+    ) {
+        self.options = options
+        self.players = players
+        self.tiles = tiles
+        self.phase = phase
+        self.currentPlayerId = currentPlayerId
+        self.pendingRoll = pendingRoll
+        self.dieMode = dieMode
+        self.turnLogs = turnLogs
+        self.winners = winners
+        self.round = round
+        self.previousWinner = previousWinner
+        self.theme = theme
+        self.currentRoundScores = currentRoundScores
+        self.completedRoundScore = completedRoundScore
+        self.completedRoundRoll = completedRoundRoll
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        options = try container.decode(GameOptions.self, forKey: .options)
+        players = try container.decode([Player].self, forKey: .players)
+        tiles = try container.decode([Tile].self, forKey: .tiles)
+        phase = try container.decode(GamePhase.self, forKey: .phase)
+        currentPlayerId = try container.decodeIfPresent(UUID.self, forKey: .currentPlayerId)
+        pendingRoll = try container.decode(DiceRoll.self, forKey: .pendingRoll)
+        dieMode = try container.decodeIfPresent(DiceMode.self, forKey: .dieMode) ?? .double
+        turnLogs = try container.decode([TurnLog].self, forKey: .turnLogs)
+        winners = try container.decodeIfPresent([WinnerSummary].self, forKey: .winners) ?? []
+        round = try container.decodeIfPresent(Int.self, forKey: .round) ?? 1
+        previousWinner = try container.decodeIfPresent(WinnerSummary.self, forKey: .previousWinner)
+        theme = try container.decodeIfPresent(ThemeOption.self, forKey: .theme) ?? .neon
+        currentRoundScores = try container.decodeIfPresent([UUID: RoundScore].self, forKey: .currentRoundScores) ?? [:]
+        completedRoundScore = try container.decodeIfPresent(Int.self, forKey: .completedRoundScore)
+        completedRoundRoll = try container.decodeIfPresent(DiceRoll.self, forKey: .completedRoundRoll)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(options, forKey: .options)
+        try container.encode(players, forKey: .players)
+        try container.encode(tiles, forKey: .tiles)
+        try container.encode(phase, forKey: .phase)
+        try container.encodeIfPresent(currentPlayerId, forKey: .currentPlayerId)
+        try container.encode(pendingRoll, forKey: .pendingRoll)
+        try container.encode(dieMode, forKey: .dieMode)
+        try container.encode(turnLogs, forKey: .turnLogs)
+        try container.encode(winners, forKey: .winners)
+        try container.encode(round, forKey: .round)
+        try container.encodeIfPresent(previousWinner, forKey: .previousWinner)
+        try container.encode(theme, forKey: .theme)
+        try container.encode(currentRoundScores, forKey: .currentRoundScores)
+        try container.encodeIfPresent(completedRoundScore, forKey: .completedRoundScore)
+        try container.encodeIfPresent(completedRoundRoll, forKey: .completedRoundRoll)
+    }
 }
 
 extension GameOptions {

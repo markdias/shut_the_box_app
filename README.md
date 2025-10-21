@@ -28,7 +28,7 @@ ShutTheBoxApp/
 ## Core gameplay flow
 
 - **Setup** – Configure options, add players, and keep the scoreboard from previous sessions thanks to `UserDefaults` persistence that mirrors the original web client's localStorage snapshot.
-- **Turn loop** – Rolling automatically picks two dice unless the one-die rule allows a single die and kick-starts new rounds on the first tap. Players build multi-tile selections whose totals must match the roll; valid sums now close the tiles instantly so the dice prompt the next roll without a confirmation bar.
+- **Turn loop** – Rolling defaults to two dice until the one-die rule unlocks the single-die toggle beneath the tray, so you can decide whether to throw one or two dice when the remainder is small. The first tap still kick-starts new rounds, and players build multi-tile selections whose totals must match the roll; valid sums now close the tiles instantly so the dice prompt the next roll without a confirmation bar.
 - **Round resolution** – Rounds end once all players have no legal moves. The winner modal lists every player, highlights ties, and honours the instant-win-on-shut rule for zero scores. Solo practice now swaps the modal for a "Did not shut the box" status banner above the dice whenever tiles remain open. The board now stays frozen at the end of a round so you can review the closed tiles, the dice keep the last roll's pip faces in the new mint accent until you tap them to reset for the next round, and the leftover score sits just beneath the tray for quick reference.
 - **Instructions overlay** – "How to Play" opens an accessible modal that summarises the rules and assists new players without leaving the app.
 
@@ -39,7 +39,7 @@ All configuration knobs live inside the Settings panel:
 | Option | Values | Behaviour |
 | --- | --- | --- |
 | Highest tile | 1–9, 1–10, 1–12 (cheat code unlocks 1–56) | Regenerates the tile strip outside active rounds. Hidden code `madness` enables the 56-tile stress test. |
-| One-die rule | After top tiles shut · When remainder < 6 · Never | Controls when the UI offers a single die. Inline help text explains each choice. |
+| One-die rule | After top tiles shut · When remainder < 6 · Never | Controls when the tray unlocks the single-die toggle. Once active you can keep rolling two dice or drop to one using the inline switch. |
 | Scoring mode | Lowest remainder · Cumulative target race · Instant win | Adapts scorekeeping. Target mode enables a configurable goal; instant mode forces instant-win behaviour. |
 | Instant win on shut | Toggle | Awards victory immediately when a player clears the board (also implied by instant scoring). |
 | Auto-retry on failure | Toggle | When paired with auto-play, restarts runs automatically after round summaries. |
