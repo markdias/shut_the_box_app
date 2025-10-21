@@ -103,6 +103,10 @@ The active learning game persists so returning to the board is a single tap.
 
 The project relies exclusively on the standard SwiftUI and Foundation frameworks, so no extra dependencies are required.
 
+## Custom app icon
+
+The asset catalog ships with placeholder filenames so you can supply your own icon without storing binary images in this repository. Export the sizes listed in [`docs/app-icon-setup.md`](docs/app-icon-setup.md) and drop the PNGs into `ShutTheBoxApp/Resources/Assets.xcassets/AppIcon.appiconset` using the provided filenames before building in Xcode.
+
 ## Continuous integration
 
 GitHub Actions automatically builds the project on every push to `main` and on pull requests using Xcode 16.2. The workflow lives at [`.github/workflows/ios-build.yml`](.github/workflows/ios-build.yml) and runs `xcodebuild` against the shared **ShutTheBoxApp** scheme with code-signing disabled. Asset symbol generation remains disabled in the project settings and the CI command passes `ENABLE_PREVIEWS=NO` plus `ASSETCATALOG_COMPILER_INCLUDE_SIMULATOR_PLATFORMS=NO` so GitHub-hosted runners are not required to install an iOS simulator runtime that matches the iOS 17.0 SDK bundled with Xcode 16.2.
