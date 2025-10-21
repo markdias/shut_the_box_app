@@ -33,8 +33,9 @@ enum GameLogic {
     }
 
     static func shouldUseOneDie(rule: OneDieRule, tiles: [Tile]) -> Bool {
-        let highest = tiles.map { $0.value }.max() ?? 0
-        let remainder = tiles.reduce(0) { $0 + $1.value }
+        let openTiles = tiles.filter { !$0.isShut }
+        let highest = openTiles.map { $0.value }.max() ?? 0
+        let remainder = openTiles.reduce(0) { $0 + $1.value }
 
         switch rule {
         case .afterTopTilesShut:
