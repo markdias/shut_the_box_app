@@ -12,7 +12,7 @@ struct HeaderView: View {
                     Text("Shut the Box")
                         .font(.largeTitle.weight(.bold))
                         .foregroundStyle(.white)
-                    Text("Round \(store.round) · Phase: \(store.phaseDisplay)")
+                    Text(phaseSummary)
                         .font(.subheadline)
                         .foregroundColor(.white.opacity(0.7))
                 }
@@ -92,6 +92,21 @@ struct HeaderView: View {
         guard let url = store.exportScores() else { return }
         let activity = UIActivityViewController(activityItems: [url], applicationActivities: nil)
         UIApplication.shared.presentedWindowRoot?.present(activity, animated: true)
+    }
+}
+
+private extension HeaderView {
+    var phaseSummary: String {
+        if store.players.count > 1 {
+            return "Round \(store.round) · Phase: \(store.phaseDisplay) · \(activePlayerDisplayName)"
+        }
+        return "Round \(store.round) · Phase: \(store.phaseDisplay)"
+    }
+
+    var activePlayerDisplayName: String {
+        let trimmed = store.activePlayer?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let fallback = trimmed.isEmpty ? "Player" : trimmed
+        return fallback
     }
 }
 
