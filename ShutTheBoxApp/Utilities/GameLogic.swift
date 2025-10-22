@@ -142,7 +142,7 @@ enum GameLogic {
     }
 }
 
-private struct ProbabilityCalculator {
+fileprivate struct ProbabilityCalculator {
     struct RollOutcome {
         let total: Int
         let probability: Double
@@ -166,6 +166,12 @@ private struct ProbabilityCalculator {
     let options: GameOptions
     private var probabilityCache: [UInt64: Double] = [:]
     private var combinationCache: [CombinationKey: [UInt64]] = [:]
+
+    // Explicit initializer so the type can be constructed from this file
+    // without exposing internal caches or requiring memberwise init.
+    fileprivate init(options: GameOptions) {
+        self.options = options
+    }
 
     mutating func evaluate(using tiles: [Tile]) -> Double {
         let mask = openMask(from: tiles)
