@@ -259,11 +259,6 @@ struct DiceTrayView: View {
                     .foregroundColor(.white.opacity(0.7))
             }
 
-            if shouldShowOneDieHelp {
-                Text(store.options.oneDieRule.helpText)
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.6))
-            }
         }
     }
 
@@ -273,10 +268,6 @@ struct DiceTrayView: View {
 
     private var showSecondDie: Bool {
         store.activeDieMode == .double || store.pendingRoll.second != nil
-    }
-
-    private var shouldShowOneDieHelp: Bool {
-        store.pendingRoll.total > 0 || store.canAdjustDieMode
     }
 
     private var finalRoundRoll: DiceRoll? {
