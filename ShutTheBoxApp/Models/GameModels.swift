@@ -214,6 +214,257 @@ struct WinnerSummary: Identifiable, Codable {
     }
 }
 
+struct RoundPlayerResult: Identifiable, Codable {
+    let id: UUID
+    let name: String
+    let score: Int?
+    let tilesShut: Int?
+
+    init(id: UUID, name: String, score: Int?, tilesShut: Int?) {
+        self.id = id
+        self.name = name
+        self.score = score
+        self.tilesShut = tilesShut
+    }
+
+    var scoreDescription: String {
+        guard let score else { return "—" }
+        return String(score)
+    }
+}
+
+struct RoundHistoryEntry: Identifiable, Codable {
+    let id: UUID
+    let roundNumber: Int
+    let completedAt: Date
+    let totalScore: Int
+    let winningPlayerIds: [UUID]
+    let playerResults: [RoundPlayerResult]
+
+    init(
+        id: UUID = UUID(),
+        roundNumber: Int,
+        completedAt: Date = Date(),
+        totalScore: Int,
+        winningPlayerIds: [UUID],
+        playerResults: [RoundPlayerResult]
+    ) {
+        self.id = id
+        self.roundNumber = roundNumber
+        self.completedAt = completedAt
+        self.totalScore = totalScore
+        self.winningPlayerIds = winningPlayerIds
+        self.playerResults = playerResults
+    }
+
+    var winnerNames: [String] {
+        winningPlayerIds.compactMap { displayName(for: $0) }
+    }
+
+    var didShut: Bool {
+        playerResults.contains { $0.score == 0 }
+    }
+
+    func displayName(for playerId: UUID) -> String? {
+        playerResults.first(where: { $0.id == playerId })?.name
+    }
+}
+
+struct RoundStatHighlight: Identifiable {
+    let id = UUID()
+    let title: String
+    let value: String
+    let detail: String
+    let icon: String
+}
+
+struct RoundHistoryStats {
+    struct Momentum {
+        let recentAverage: Double
+        let overallAverage: Double
+
+        var delta: Double { recentAverage - overallAverage }
+    }
+
+    let entries: [RoundHistoryEntry]
+
+    var totalRounds: Int { entries.count }
+
+    private var totalScoreSum: Int {
+        entries.reduce(0) { $0 + $1.totalScore }
+    }
+
+    var averageTotal: Double? {
+        guard totalRounds > 0 else { return nil }
+        return Double(totalScoreSum) / Double(totalRounds)
+    }
+
+    var cleanShutCount: Int {
+        entries.filter { $0.didShut }.count
+    }
+
+    var cleanShutRate: Double? {
+        guard totalRounds > 0 else { return nil }
+        return Double(cleanShutCount) / Double(totalRounds)
+    }
+
+    var bestRound: RoundHistoryEntry? {
+        entries.min(by: { lhs, rhs in lhs.totalScore < rhs.totalScore })
+    }
+
+    var topWinner: (names: [String], wins: Int)? {
+        guard !entries.isEmpty else { return nil }
+        var counts: [UUID: Int] = [:]
+        var nameLookup: [UUID: String] = [:]
+
+        for entry in entries {
+            for winnerId in entry.winningPlayerIds {
+                counts[winnerId, default: 0] += 1
+                if let name = entry.displayName(for: winnerId) {
+                    nameLookup[winnerId] = name
+                }
+            }
+        }
+
+        guard let maxWins = counts.values.max(), maxWins > 0 else { return nil }
+        let bestIds = counts.filter { $0.value == maxWins }.map { $0.key }
+        let names = bestIds.compactMap { nameLookup[$0] }
+        guard !names.isEmpty else { return nil }
+        return (names.sorted(), maxWins)
+    }
+
+    var longestWinStreak: (name: String, length: Int)? {
+        guard !entries.isEmpty else { return nil }
+        var streakId: UUID?
+        var streakLength = 0
+        var bestId: UUID?
+        var bestLength = 0
+        var nameLookup: [UUID: String] = [:]
+
+        let ordered = entries.sorted { $0.completedAt < $1.completedAt }
+        for entry in ordered {
+            if let winnerId = entry.winningPlayerIds.first, entry.winningPlayerIds.count == 1 {
+                if streakId == winnerId {
+                    streakLength += 1
+                } else {
+                    streakId = winnerId
+                    streakLength = 1
+                }
+                if streakLength > bestLength {
+                    bestLength = streakLength
+                    bestId = winnerId
+                }
+                if let name = entry.displayName(for: winnerId) {
+                    nameLookup[winnerId] = name
+                }
+            } else {
+                streakId = nil
+                streakLength = 0
+            }
+        }
+
+        guard let resolvedId = bestId,
+              let resolvedName = nameLookup[resolvedId],
+              bestLength > 1 else { return nil }
+        return (resolvedName, bestLength)
+    }
+
+    var momentum: Momentum? {
+        guard totalRounds >= 3, let overall = averageTotal else { return nil }
+        let recent = entries.suffix(3)
+        let recentAverage = Double(recent.reduce(0) { $0 + $1.totalScore }) / Double(recent.count)
+        return Momentum(recentAverage: recentAverage, overallAverage: overall)
+    }
+
+    var highlights: [RoundStatHighlight] {
+        guard !entries.isEmpty else { return [] }
+
+        var items: [RoundStatHighlight] = []
+        items.append(
+            RoundStatHighlight(
+                title: "Rounds Logged",
+                value: "\(totalRounds)",
+                detail: "Captured totals since the last reset",
+                icon: "clock.badge.checkmark"
+            )
+        )
+
+        if let averageTotal {
+            items.append(
+                RoundStatHighlight(
+                    title: "Average Total",
+                    value: String(format: "%.1f", averageTotal),
+                    detail: "Lower leftovers mean stronger play",
+                    icon: "sum"
+                )
+            )
+        }
+
+        if let rate = cleanShutRate {
+            let percentage = Int(round(rate * 100))
+            items.append(
+                RoundStatHighlight(
+                    title: "Clean Shuts",
+                    value: "\(cleanShutCount)",
+                    detail: "\(percentage)% of rounds ended in a shut box",
+                    icon: "sparkles"
+                )
+            )
+        }
+
+        if let leader = topWinner {
+            let nameText = leader.names.joined(separator: ", ")
+            items.append(
+                RoundStatHighlight(
+                    title: "Win Leader",
+                    value: nameText,
+                    detail: "\(leader.wins) round wins",
+                    icon: "crown"
+                )
+            )
+        }
+
+        if let streak = longestWinStreak {
+            items.append(
+                RoundStatHighlight(
+                    title: "Hot Streak",
+                    value: streak.name,
+                    detail: "\(streak.length) solo wins in a row",
+                    icon: "flame"
+                )
+            )
+        }
+
+        if let momentum {
+            let delta = momentum.delta
+            let trend = delta < 0 ? "Improving" : "Cooling"
+            let formattedDelta = String(format: "%@%.1f", delta >= 0 ? "+" : "", delta)
+            items.append(
+                RoundStatHighlight(
+                    title: "Momentum",
+                    value: trend,
+                    detail: "Last 3 avg \(String(format: "%.1f", momentum.recentAverage)) (\(formattedDelta) vs overall)",
+                    icon: delta < 0 ? "arrow.down.right" : "arrow.up.right"
+                )
+            )
+        }
+
+        if let bestRound {
+            let winners = bestRound.winnerNames.joined(separator: ", ")
+            items.append(
+                RoundStatHighlight(
+                    title: "Best Round",
+                    value: "Round \(bestRound.roundNumber)",
+                    detail: "Total \(bestRound.totalScore) – \(winners.isEmpty ? "No winner" : winners)",
+                    icon: "target"
+                )
+            )
+        }
+
+        return items
+    }
+}
+
 struct LearningGame: Identifiable, Codable, Equatable {
     let id: String
     let title: String
@@ -299,6 +550,7 @@ struct GameSettingsSnapshot: Codable {
     var currentRoundScores: [UUID: RoundScore] = [:]
     var completedRoundScore: Int?
     var completedRoundRoll: DiceRoll?
+    var roundHistory: [RoundHistoryEntry] = []
 
     private enum CodingKeys: String, CodingKey {
         case options
@@ -316,6 +568,7 @@ struct GameSettingsSnapshot: Codable {
         case currentRoundScores
         case completedRoundScore
         case completedRoundRoll
+        case roundHistory
     }
 
     init(
@@ -333,7 +586,8 @@ struct GameSettingsSnapshot: Codable {
         theme: ThemeOption,
         currentRoundScores: [UUID: RoundScore] = [:],
         completedRoundScore: Int?,
-        completedRoundRoll: DiceRoll?
+        completedRoundRoll: DiceRoll?,
+        roundHistory: [RoundHistoryEntry] = []
     ) {
         self.options = options
         self.players = players
@@ -350,6 +604,7 @@ struct GameSettingsSnapshot: Codable {
         self.currentRoundScores = currentRoundScores
         self.completedRoundScore = completedRoundScore
         self.completedRoundRoll = completedRoundRoll
+        self.roundHistory = roundHistory
     }
 
     init(from decoder: Decoder) throws {
@@ -369,6 +624,7 @@ struct GameSettingsSnapshot: Codable {
         currentRoundScores = try container.decodeIfPresent([UUID: RoundScore].self, forKey: .currentRoundScores) ?? [:]
         completedRoundScore = try container.decodeIfPresent(Int.self, forKey: .completedRoundScore)
         completedRoundRoll = try container.decodeIfPresent(DiceRoll.self, forKey: .completedRoundRoll)
+        roundHistory = try container.decodeIfPresent([RoundHistoryEntry].self, forKey: .roundHistory) ?? []
     }
 
     func encode(to encoder: Encoder) throws {
@@ -388,6 +644,7 @@ struct GameSettingsSnapshot: Codable {
         try container.encode(currentRoundScores, forKey: .currentRoundScores)
         try container.encodeIfPresent(completedRoundScore, forKey: .completedRoundScore)
         try container.encodeIfPresent(completedRoundRoll, forKey: .completedRoundRoll)
+        try container.encode(roundHistory, forKey: .roundHistory)
     }
 }
 

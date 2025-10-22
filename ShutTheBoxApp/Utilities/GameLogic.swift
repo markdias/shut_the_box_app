@@ -106,6 +106,11 @@ enum GameLogic {
         return Set(combos.flatMap { $0.map { $0.id } })
     }
 
+    static func winningProbability(for tiles: [Tile], options: GameOptions) -> Double {
+        var calculator = ProbabilityCalculator(options: options)
+        return calculator.evaluate(using: tiles)
+    }
+
     static func riggedRollForPerfectMove(tiles: [Tile], prefersSingleDie: Bool) -> DiceRoll? {
         guard !tiles.isEmpty else { return nil }
         let openTiles = tiles.filter { !$0.isShut }
@@ -134,6 +139,144 @@ enum GameLogic {
 
         // Higher is better.
         return comboSum * 100 - remainderSum * 10 + diversity
+    }
+}
+
+private struct ProbabilityCalculator {
+    struct RollOutcome {
+        let total: Int
+        let probability: Double
+    }
+
+    private static let singleDieOutcomes: [RollOutcome] = (1...6).map { value in
+        RollOutcome(total: value, probability: 1.0 / 6.0)
+    }
+
+    private static let doubleDieOutcomes: [RollOutcome] = [
+        (2, 1), (3, 2), (4, 3), (5, 4), (6, 5), (7, 6), (8, 5), (9, 4), (10, 3), (11, 2), (12, 1)
+    ].map { total, count in
+        RollOutcome(total: total, probability: Double(count) / 36.0)
+    }
+
+    private struct CombinationKey: Hashable {
+        let mask: UInt64
+        let total: Int
+    }
+
+    let options: GameOptions
+    private var probabilityCache: [UInt64: Double] = [:]
+    private var combinationCache: [CombinationKey: [UInt64]] = [:]
+
+    mutating func evaluate(using tiles: [Tile]) -> Double {
+        let mask = openMask(from: tiles)
+        return probability(forMask: mask)
+    }
+
+    private mutating func probability(forMask mask: UInt64) -> Double {
+        if mask == 0 { return 1 }
+        if let cached = probabilityCache[mask] { return cached }
+
+        var best: Double = 0
+        if allowSingleDie(mask: mask) {
+            best = max(best, probability(for: .single, mask: mask))
+        }
+        best = max(best, probability(for: .double, mask: mask))
+
+        probabilityCache[mask] = best
+        return best
+    }
+
+    private mutating func probability(for mode: DiceMode, mask: UInt64) -> Double {
+        let outcomes = mode == .single ? Self.singleDieOutcomes : Self.doubleDieOutcomes
+        let values = openValues(for: mask)
+        guard !values.isEmpty else { return 1 }
+
+        var totalProbability: Double = 0
+
+        for outcome in outcomes {
+            let combinations = combinationMasks(for: outcome.total, mask: mask, values: values)
+            guard !combinations.isEmpty else { continue }
+
+            var bestForRoll: Double = 0
+            for combo in combinations {
+                let remainingMask = mask & ~combo
+                let probability = probability(forMask: remainingMask)
+                bestForRoll = max(bestForRoll, probability)
+            }
+
+            totalProbability += outcome.probability * bestForRoll
+        }
+
+        return totalProbability
+    }
+
+    private func openMask(from tiles: [Tile]) -> UInt64 {
+        tiles.reduce(into: UInt64(0)) { partial, tile in
+            guard !tile.isShut else { return }
+            guard tile.value > 0 else { return }
+            let bit = UInt64(1) << UInt64(tile.value - 1)
+            partial |= bit
+        }
+    }
+
+    private func openValues(for mask: UInt64) -> [Int] {
+        guard mask != 0 else { return [] }
+        var values: [Int] = []
+        var bitIndex = 0
+        var workingMask = mask
+        while workingMask != 0 {
+            if workingMask & 1 == 1 {
+                values.append(bitIndex + 1)
+            }
+            workingMask >>= 1
+            bitIndex += 1
+        }
+        return values
+    }
+
+    private func allowSingleDie(mask: UInt64) -> Bool {
+        let values = openValues(for: mask)
+        let highest = values.max() ?? 0
+        let remainder = values.reduce(0, +)
+
+        switch options.oneDieRule {
+        case .afterTopTilesShut:
+            return highest <= 6 && highest > 0
+        case .whenRemainderLessThanSix:
+            return remainder < 6 && remainder > 0
+        case .never:
+            return false
+        }
+    }
+
+    private mutating func combinationMasks(for total: Int, mask: UInt64, values: [Int]) -> [UInt64] {
+        guard total > 0 else { return [] }
+        let key = CombinationKey(mask: mask, total: total)
+        if let cached = combinationCache[key] { return cached }
+
+        var results: [UInt64] = []
+        let sortedValues = values.sorted()
+
+        func search(index: Int, remaining: Int, currentMask: UInt64) {
+            if remaining == 0 {
+                results.append(currentMask)
+                return
+            }
+            guard remaining > 0 else { return }
+            guard index < sortedValues.count else { return }
+
+            for nextIndex in index..<sortedValues.count {
+                let value = sortedValues[nextIndex]
+                if value > remaining { break }
+                let bit = UInt64(1) << UInt64(value - 1)
+                guard mask & bit != 0 else { continue }
+                search(index: nextIndex + 1, remaining: remaining - value, currentMask: currentMask | bit)
+            }
+        }
+
+        search(index: 0, remaining: total, currentMask: 0)
+        combinationCache[key] = results
+        return results
     }
 }
 
