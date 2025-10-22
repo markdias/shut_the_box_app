@@ -556,6 +556,15 @@ final class GameStore: ObservableObject {
     private func roundWinningPlayers() -> [Player] {
         guard !currentRoundScores.isEmpty else { return [] }
 
+        if players.count == 1 {
+            guard let player = players.first,
+                  let result = currentRoundScores[player.id],
+                  result.score == 0 else {
+                return []
+            }
+            return [player]
+        }
+
         switch options.scoringMode {
         case .lowestRemainder, .instantWin:
             let best = currentRoundScores.values.map { $0.score }.min() ?? 0
