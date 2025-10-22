@@ -101,10 +101,12 @@ private struct TurnStatusView: View {
     }
 
     private var startButtonTitle: String {
-        if store.phase == .roundComplete {
+        switch store.phase {
+        case .roundComplete:
             return "Start Next Round"
+        case .setup, .playing:
+            return "Start \(possessiveName) Go"
         }
-        return "Start \(possessiveName) Go"
     }
 
     private var buttonAccessibilityLabel: Text {
@@ -125,74 +127,8 @@ private struct TurnStatusView: View {
         }
     }
 
-    private var probabilityDetails: ProbabilityDisplay? {
-        guard store.phase == .playing, let probability = store.winningProbability else { return nil }
-        let clamped = max(0, min(1, probability))
-        let percent = Int(round(clamped * 100))
-        let descriptor = probabilityDescriptor(for: clamped)
-        let context: String
-        if store.pendingRoll.total > 0 {
-            context = "Resolve the \(store.pendingRoll.total) roll"
-        } else {
-            context = "Before the next roll"
-        }
-        return ProbabilityDisplay(
-            percent: percent,
-            title: descriptor.title,
-            message: descriptor.message,
-            icon: descriptor.icon,
-            tint: descriptor.tint,
-            context: context
-        )
-    }
-
-    private func probabilityDescriptor(for probability: Double) -> ProbabilityDescriptor {
-        switch probability {
-        case 0.8...:
-            return ProbabilityDescriptor(
-                title: "In control",
-                message: "Favourable odds to shut the box.",
-                icon: "chart.line.uptrend.xyaxis",
-                tint: .green
-            )
-        case 0.55...:
-            return ProbabilityDescriptor(
-                title: "Slight edge",
-                message: "Several promising combos remain.",
-                icon: "arrow.up.right.circle.fill",
-                tint: .mint
-            )
-        case 0.3...:
-            return ProbabilityDescriptor(
-                title: "Tight spot",
-                message: "You'll need clever tile picks.",
-                icon: "exclamationmark.circle.fill",
-                tint: .orange
-            )
-        default:
-            return ProbabilityDescriptor(
-                title: "Long shot",
-                message: "Hope for a miracle sequence.",
-                icon: "die.face.1",
-                tint: .red
-            )
-        }
-    }
-
-    private struct ProbabilityDescriptor {
-        let title: String
-        let message: String
-        let icon: String
-        let tint: Color
-    }
-
-    private struct ProbabilityDisplay {
-        let percent: Int
-        let title: String
-        let message: String
-        let icon: String
-        let tint: Color
-        let context: String
+    private var shouldShowStartButton: Bool {
+        store.phase != .playing
     }
 
     var body: some View {
@@ -218,42 +154,16 @@ private struct TurnStatusView: View {
                 Spacer()
             }
 
-            if let probabilityDetails {
-                HStack(alignment: .center, spacing: 12) {
-                    Image(systemName: probabilityDetails.icon)
-                        .font(.headline)
-                        .foregroundColor(probabilityDetails.tint)
-                        .padding(10)
-                        .background(probabilityDetails.tint.opacity(0.2))
-                        .clipShape(Circle())
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Win Chance \(probabilityDetails.percent)%")
-                            .font(.caption.weight(.bold))
-                            .foregroundColor(.white)
-                        Text("\(probabilityDetails.title) · \(probabilityDetails.context)")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundColor(probabilityDetails.tint)
-                        Text(probabilityDetails.message)
-                            .font(.caption2)
-                            .foregroundColor(.white.opacity(0.7))
-                    }
-
-                    Spacer()
+            if shouldShowStartButton {
+                Button(action: { store.rollDice() }) {
+                    Label(startButtonTitle, systemImage: "play.fill")
+                        .frame(maxWidth: .infinity)
                 }
-                .padding(12)
-                .background(Color.white.opacity(0.08))
-                .clipShape(RoundedRectangle(cornerRadius: isCompact ? 18 : 20, style: .continuous))
+                .buttonStyle(NeonButtonStyle())
+                .disabled(!store.canRollDice)
+                .opacity(store.canRollDice ? 1 : 0.6)
+                .accessibilityLabel(buttonAccessibilityLabel)
             }
-
-            Button(action: { store.rollDice() }) {
-                Label(startButtonTitle, systemImage: "play.fill")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(NeonButtonStyle())
-            .disabled(!store.canRollDice)
-            .opacity(store.canRollDice ? 1 : 0.6)
-            .accessibilityLabel(buttonAccessibilityLabel)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
