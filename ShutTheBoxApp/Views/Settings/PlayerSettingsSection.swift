@@ -61,13 +61,13 @@ private struct PlayerSettingsRow: View {
             .buttonStyle(.borderless)
         }
         .padding(.vertical, 6)
-        .onChange(of: name) { newValue in
-            guard newValue != player.name else { return }
-            store.updatePlayer(player, name: newValue)
+        .onChange(of: name) {
+            guard name != player.name else { return }
+            store.updatePlayer(player, name: name)
         }
-        .onChange(of: player.name) { newValue in
-            guard newValue != name else { return }
-            name = newValue
+        .onChange(of: player.name) {
+            guard player.name != name else { return }
+            name = player.name
         }
     }
 }

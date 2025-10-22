@@ -88,7 +88,7 @@ The active learning game persists so returning to the board is a single tap.
 ## User interface & responsiveness
 
 - The mobile header condenses into a menu and status toggle while desktop keeps settings and history buttons inline.
-- Dice tray animations react to rolls, the dice faces render classic pip layouts in the refreshed mint hue instead of numerals, and the dice themselves are now the roll trigger—your first tap starts the round, so there's no Start Game button to chase. When you do shut the box, a trophy celebration erupts above the tray and the multi-player winners modal echoes the moment with a confetti-backed highlight card.
+- Dice tray animations react to rolls, the dice faces render classic pip layouts in the refreshed mint hue instead of numerals, and the dice themselves are now the roll trigger—your first tap starts the round, so there's no Start Game button to chase. When you do shut the box, a trophy celebration now appears as a full-screen overlay that you dismiss to continue, and the multi-player winners modal echoes the moment with a confetti-backed highlight card.
 - Neon attention glows wrap the dice tray when it's time to roll or restart and surround the tile grid while resolving the active combination so the next action is unmistakable.
 - Status chips display round, phase, active player, roster size, previous winners, and hint status when enabled.
 - Multi-player sessions surface a streamlined turn status card on the main board that highlights whose turn is next before a round begins and then gets out of the way once play starts. The active player's name also appears alongside the phase header for quick reference.

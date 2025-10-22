@@ -3,35 +3,102 @@ import SwiftUI
 struct GameBoardView: View {
     @EnvironmentObject private var store: GameStore
     let isCompact: Bool
+    @State private var soloCelebrationPresented: Bool = false
+    @State private var soloCelebrationWinnerId: UUID?
 
     var body: some View {
-        VStack(spacing: 24) {
-            if store.players.count > 1 {
-                TurnStatusView(isCompact: isCompact)
+        ZStack {
+            VStack(spacing: 24) {
+                if store.players.count > 1 {
+                    TurnStatusView(isCompact: isCompact)
+                }
+                AttentionContainer(isActive: diceNeedsAttention, cornerRadius: isCompact ? 24 : 28) {
+                    DiceTrayView(isCompact: isCompact)
+                }
+                AttentionContainer(isActive: tilesNeedAttention, cornerRadius: isCompact ? 20 : 24) {
+                    TileGridView(isCompact: isCompact)
+                }
+                ProgressCardsView(isCompact: isCompact)
+                EndTurnBar()
             }
-            AttentionContainer(isActive: diceNeedsAttention, cornerRadius: isCompact ? 24 : 28) {
-                DiceTrayView(isCompact: isCompact)
-            }
-            AttentionContainer(isActive: tilesNeedAttention, cornerRadius: isCompact ? 20 : 24) {
-                TileGridView(isCompact: isCompact)
-            }
-            ProgressCardsView(isCompact: isCompact)
-            EndTurnBar()
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 32)
-                .fill(Color.white.opacity(0.04))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 32)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 32)
+                    .fill(Color.white.opacity(0.04))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 32)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+            )
+            .padding(.horizontal)
+            .allowsHitTesting(!shouldShowSoloCelebrationOverlay)
+
+            if shouldShowSoloCelebrationOverlay, let summary = soloCelebrationSummary {
+                SoloCelebrationOverlay(
+                    headline: soloCelebrationHeadline,
+                    message: soloCelebrationMessage(for: summary),
+                    winner: summary,
+                    dismissAction: { withAnimation { soloCelebrationPresented = false } }
                 )
-        )
-        .padding(.horizontal)
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(1)
+            }
+        }
+        .onAppear { configureSoloCelebrationState() }
+        .onChange(of: soloCelebrationSummary?.id) {
+            configureSoloCelebrationState()
+        }
     }
 }
 
 private extension GameBoardView {
+    private var soloCelebrationSummary: WinnerSummary? {
+        guard store.players.count == 1 else { return nil }
+        guard store.phase == .roundComplete else { return nil }
+        guard (store.completedRoundScore ?? Int.max) == 0 else { return nil }
+        if let summary = store.previousWinner {
+            return summary
+        }
+        if let player = store.players.first {
+            return WinnerSummary(playerName: player.name, score: 0, tilesShut: store.options.maxTile)
+        }
+        return nil
+    }
+
+    private var soloCelebrationHeadline: String { "Box Shut!" }
+
+    private func soloCelebrationMessage(for summary: WinnerSummary) -> String {
+        let trimmedName = summary.playerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let displayName = trimmedName.isEmpty ? "Player" : trimmedName
+        if summary.tilesShut >= store.options.maxTile {
+            return "\(displayName) closed every tile for a flawless finish!"
+        }
+        return "\(displayName) shut the box with \(summary.tilesShut) tiles!"
+    }
+
+    private func configureSoloCelebrationState() {
+        guard let summary = soloCelebrationSummary else {
+            withAnimation {
+                soloCelebrationPresented = false
+            }
+            soloCelebrationWinnerId = nil
+            return
+        }
+
+        if soloCelebrationWinnerId != summary.id {
+            soloCelebrationWinnerId = summary.id
+            withAnimation {
+                soloCelebrationPresented = true
+            }
+        }
+    }
+
+    private var shouldShowSoloCelebrationOverlay: Bool {
+        guard soloCelebrationPresented else { return false }
+        guard let summary = soloCelebrationSummary else { return false }
+        return soloCelebrationWinnerId == summary.id
+    }
+
     var diceNeedsAttention: Bool {
         switch store.phase {
         case .setup, .roundComplete:
@@ -190,16 +257,7 @@ struct DiceTrayView: View {
                 .foregroundColor(.white)
 
             ZStack(alignment: .top) {
-                if let celebration = soloCelebrationSummary {
-                    WinCelebrationView(
-                        headline: soloCelebrationHeadline,
-                        message: soloCelebrationMessage(for: celebration),
-                        winners: [celebration],
-                        accent: Color.mint
-                    )
-                    .frame(maxWidth: .infinity)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                } else if showBoxNotShutBanner {
+                if showBoxNotShutBanner {
                     DidNotShutBanner()
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
@@ -221,7 +279,7 @@ struct DiceTrayView: View {
                             }
                         }
                     }
-                    .padding(.top, overlayClearance)
+                    .padding(.top, showBoxNotShutBanner ? bannerClearance : 0)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -363,13 +421,6 @@ struct DiceTrayView: View {
         return "\(displayName) shut the box with \(summary.tilesShut) tiles!"
     }
 
-    private var overlayClearance: CGFloat {
-        if soloCelebrationSummary != nil {
-            return isCompact ? 96 : 112
-        }
-        return bannerClearance
-    }
-
     private var showBoxNotShutBanner: Bool {
         guard store.players.count == 1 else { return false }
         guard store.phase == .roundComplete else { return false }
@@ -397,6 +448,46 @@ struct DiceTrayView: View {
         components.append(action)
 
         return Text(components.joined(separator: ". ") + ".")
+    }
+}
+
+private struct SoloCelebrationOverlay: View {
+    let headline: String
+    let message: String
+    let winner: WinnerSummary
+    let dismissAction: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.55)
+                .ignoresSafeArea()
+                .onTapGesture(perform: dismissAction)
+
+            VStack(spacing: 24) {
+                WinCelebrationView(
+                    headline: headline,
+                    message: message,
+                    winners: [winner],
+                    accent: .mint
+                )
+
+                Button(action: dismissAction) {
+                    Label("Continue", systemImage: "hand.thumbsup.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(NeonButtonStyle())
+                .accessibilityHint(Text("Dismiss the celebration and continue playing."))
+            }
+            .padding()
+            .frame(maxWidth: 420)
+            .background(
+                .ultraThinMaterial,
+                in: RoundedRectangle(cornerRadius: 28, style: .continuous)
+            )
+            .padding()
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityAddTraits(.isModal)
     }
 }
 
