@@ -24,6 +24,7 @@ jobs:
           xcodebuild \
             -project ShutTheBoxApp.xcodeproj \
             -scheme ShutTheBoxApp \
+            -sdk iphoneos \
             -destination 'generic/platform=iOS' \
             CODE_SIGNING_ALLOWED=NO \
             ENABLE_PREVIEWS=NO \

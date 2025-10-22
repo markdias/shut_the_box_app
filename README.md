@@ -1,6 +1,6 @@
 # Shut the Box iOS
 
-This repository contains a full SwiftUI implementation of the neon-inspired **Shut the Box** experience originally built with Vite + React. The native port mirrors the gameplay loop, theme controls, history tracking, and learning mini-games that exist in the web client, while adapting the interface for iPhone and iPad form factors.
+This repository contains a full SwiftUI implementation of the neon-inspired **Shut the Box** experience originally built with Vite + React. The native port mirrors the gameplay loop, theme controls, history tracking, and learning mini-games that exist in the web client, while adapting the interface for iPhone form factors.
 
 ## Project structure
 
@@ -107,7 +107,7 @@ The project relies exclusively on the standard SwiftUI and Foundation frameworks
 
 ## Continuous integration
 
-GitHub Actions automatically builds the project on every push to `main` and on pull requests using Xcode 16.2. The workflow lives at [`.github/workflows/ios-build.yml`](.github/workflows/ios-build.yml) and runs `xcodebuild` against the shared **ShutTheBoxApp** scheme with code-signing disabled. Asset symbol generation remains disabled in the project settings and the CI command passes `ENABLE_PREVIEWS=NO` plus `ASSETCATALOG_COMPILER_INCLUDE_SIMULATOR_PLATFORMS=NO` so GitHub-hosted runners are not required to install an iOS simulator runtime that matches the iOS 17.0 SDK bundled with Xcode 16.2.
+GitHub Actions automatically builds the project on every push to `main` and on pull requests using Xcode 16.2. The workflow lives at [`.github/workflows/ios-build.yml`](.github/workflows/ios-build.yml) and runs `xcodebuild` against the shared **ShutTheBoxApp** scheme with code-signing disabled. Asset symbol generation remains disabled in the project settings, the CI command now pins `-sdk iphoneos` alongside `-destination 'generic/platform=iOS'` to ensure the device SDK is selected, and it passes `ENABLE_PREVIEWS=NO` plus `ASSETCATALOG_COMPILER_INCLUDE_SIMULATOR_PLATFORMS=NO`. Building directly against the device SDK avoids simulator runtime mismatches on GitHub-hosted runners while keeping the asset catalog valid for the iPhone-only target.
 
 ## Testing
 
