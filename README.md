@@ -63,6 +63,7 @@ Hit the **Reset** header action at any time to clear all active cheat effects, d
 - Manage the hot-seat roster from **Settings → Players**, adding or removing participants, renaming them inline, and toggling per-player hints.
 - Track each player's last score, cumulative totals (for target mode), and unfinished turns inside the roster.
 - The History panel records every roll, move, bust, and celebration with colourful icons. It persists across launches alongside scores, rounds, previous winners, and the selected theme under the key `shut-the-box:scores`.
+- Round history cards summarise each completed round with the total leftover pips, per-player results, and the winners for quick comparison. A highlights grid surfaces clever stats such as clean shut rate, win leaders, longest streak, momentum shifts, and the best round so far.
 - The "Save Scores" header action exports the persisted snapshot as `shut-the-box-scores.json`, including the round number, current phase, totals, and active theme.
 
 ## Assistive & automated play
@@ -91,6 +92,7 @@ The active learning game persists so returning to the board is a single tap.
 - Neon attention glows wrap the dice tray when it's time to roll or restart and surround the tile grid while resolving the active combination so the next action is unmistakable.
 - Status chips display round, phase, active player, roster size, previous winners, and hint status when enabled.
 - Multi-player sessions surface a turn status card on the main board that highlights the active player and offers a **Start Go** button so the next participant can take over without guessing.
+- The turn status card now includes a live **Win Chance** read-out, combining the remaining tiles, current roll, and dice rules to estimate your odds of shutting the box. The descriptor shifts from "Long shot" to "In control" so you know whether to play it safe or press the advantage.
 - Progress cards show tiles closed, selected totals, available combinations, and completion percentage, while toast notifications announce next turns.
 - Multiple SwiftUI themes deliver neon, grid, wood, and felt aesthetics with a single toggle.
 

@@ -15,6 +15,7 @@ final class GameStore: ObservableObject {
     @Published private(set) var turnLogs: [TurnLog]
     @Published private(set) var winners: [WinnerSummary]
     @Published private(set) var previousWinner: WinnerSummary?
+    @Published private(set) var roundHistory: [RoundHistoryEntry]
     @Published private(set) var showSettings: Bool = false
     @Published private(set) var showHistory: Bool = false
     @Published private(set) var showHints: Bool = false
@@ -42,12 +43,41 @@ final class GameStore: ObservableObject {
         guard options.maxTile > 0 else { return 0 }
         return (Double(shutTilesCount) / Double(options.maxTile)) * 100
     }
+    var roundHistoryStats: RoundHistoryStats { RoundHistoryStats(entries: roundHistory) }
+    var roundHighlights: [RoundStatHighlight] { roundHistoryStats.highlights }
     var canAdjustDieMode: Bool {
         phase == .playing && GameLogic.shouldUseOneDie(rule: options.oneDieRule, tiles: tiles)
     }
     var activeDieMode: DiceMode {
         let allowSingle = GameLogic.shouldUseOneDie(rule: options.oneDieRule, tiles: tiles)
         return allowSingle ? dieMode : .double
+    }
+
+    var winningProbability: Double? {
+        guard phase == .playing else { return nil }
+        let openTiles = tiles.filter { !$0.isShut }
+        guard !openTiles.isEmpty else { return 1 }
+
+        if pendingRoll.total > 0 {
+            let combinations = GameLogic.availableCombinations(for: pendingRoll, tiles: tiles)
+            guard !combinations.isEmpty else { return 0 }
+
+            var bestProbability: Double = 0
+            for combo in combinations {
+                var simulatedTiles = tiles
+                for tile in combo {
+                    if let idx = simulatedTiles.firstIndex(where: { $0.id == tile.id }) {
+                        simulatedTiles[idx].isShut = true
+                        simulatedTiles[idx].isSelected = false
+                    }
+                }
+                let probability = GameLogic.winningProbability(for: simulatedTiles, options: options)
+                bestProbability = max(bestProbability, probability)
+            }
+            return bestProbability
+        }
+
+        return GameLogic.winningProbability(for: tiles, options: options)
     }
 
     var canRollDice: Bool {
@@ -91,6 +121,7 @@ final class GameStore: ObservableObject {
             self.turnLogs = snapshot.turnLogs
             self.winners = snapshot.winners
             self.previousWinner = snapshot.previousWinner
+            self.roundHistory = snapshot.roundHistory
             self.currentRoundScores = snapshot.currentRoundScores
             self.completedRoundScore = snapshot.completedRoundScore
             self.completedRoundRoll = snapshot.completedRoundRoll
@@ -107,6 +138,7 @@ final class GameStore: ObservableObject {
             self.turnLogs = []
             self.winners = []
             self.previousWinner = nil
+            self.roundHistory = []
             self.currentRoundScores = [:]
             self.completedRoundScore = nil
             self.completedRoundRoll = nil
@@ -243,6 +275,7 @@ final class GameStore: ObservableObject {
         riggedRoll = nil
         bestMove = []
         currentRoundScores.removeAll()
+        roundHistory.removeAll()
         autoPlayEnabled = false
         cheatInput = ""
         showHints = false
@@ -415,12 +448,14 @@ final class GameStore: ObservableObject {
     }
 
     private func finalizeInstantWin(for player: Player, tilesClosed: Int, lastTurnTiles: [Tile], score: Int) {
+        let finishedRoundNumber = round
         let summary = WinnerSummary(playerName: player.name, score: 0, tilesShut: tilesClosed)
         winners = [summary]
         previousWinner = summary
         let shouldShowPopup = players.count > 1
         showWinners = shouldShowPopup
         phase = .roundComplete
+        appendRoundHistoryEntry(forRound: finishedRoundNumber, winners: [player])
         round += 1
         currentRoundScores.removeAll()
         currentPlayerIndex = 0
@@ -450,14 +485,16 @@ final class GameStore: ObservableObject {
     }
 
     private func finalizeRound(lastTurnTiles: [Tile], score: Int) {
+        let finishedRoundNumber = round
+        let winningPlayers = roundWinningPlayers()
+        let summaries = winnerSummaries(for: winningPlayers)
         phase = .roundComplete
+        appendRoundHistoryEntry(forRound: finishedRoundNumber, winners: winningPlayers)
         round += 1
         currentPlayerIndex = 0
         tiles = lastTurnTiles
         completedRoundScore = score
         completedRoundRoll = lastRolledDice
-
-        let summaries = roundSummaries()
         winners = summaries
         previousWinner = summaries.first
         let shouldShowPopup = players.count > 1
@@ -483,30 +520,54 @@ final class GameStore: ObservableObject {
     }
 
     private func roundSummaries() -> [WinnerSummary] {
+        winnerSummaries(for: roundWinningPlayers())
+    }
+
+    private func winnerSummaries(for winners: [Player]) -> [WinnerSummary] {
+        winners.map { player in
+            let data = currentRoundScores[player.id] ?? RoundScore(score: 0, tilesShut: 0)
+            return WinnerSummary(playerName: player.name, score: data.score, tilesShut: data.tilesShut)
+        }
+    }
+
+    private func appendRoundHistoryEntry(forRound roundNumber: Int, winners: [Player]) {
+        guard !currentRoundScores.isEmpty else { return }
+
+        let results: [RoundPlayerResult] = players.map { player in
+            let data = currentRoundScores[player.id]
+            return RoundPlayerResult(
+                id: player.id,
+                name: player.name,
+                score: data?.score,
+                tilesShut: data?.tilesShut
+            )
+        }
+
+        let total = results.compactMap { $0.score }.reduce(0, +)
+        let entry = RoundHistoryEntry(
+            roundNumber: roundNumber,
+            totalScore: total,
+            winningPlayerIds: winners.map { $0.id },
+            playerResults: results
+        )
+        roundHistory.append(entry)
+    }
+
+    private func roundWinningPlayers() -> [Player] {
         guard !currentRoundScores.isEmpty else { return [] }
 
         switch options.scoringMode {
         case .lowestRemainder, .instantWin:
             let best = currentRoundScores.values.map { $0.score }.min() ?? 0
-            let winners = players.filter { currentRoundScores[$0.id]?.score == best }
-            return winners.map { player in
-                let data = currentRoundScores[player.id] ?? RoundScore(score: 0, tilesShut: 0)
-                return WinnerSummary(playerName: player.name, score: data.score, tilesShut: data.tilesShut)
-            }
+            return players.filter { currentRoundScores[$0.id]?.score == best }
         case .targetRace:
             let contenders = players.filter { $0.totalScore >= options.targetGoal }
             if contenders.isEmpty {
                 let best = currentRoundScores.values.map { $0.score }.min() ?? 0
-                return players.filter { currentRoundScores[$0.id]?.score == best }.map { player in
-                    let data = currentRoundScores[player.id] ?? RoundScore(score: 0, tilesShut: 0)
-                    return WinnerSummary(playerName: player.name, score: data.score, tilesShut: data.tilesShut)
-                }
+                return players.filter { currentRoundScores[$0.id]?.score == best }
             }
             let minimum = contenders.map { $0.totalScore }.min() ?? options.targetGoal
-            return contenders.filter { $0.totalScore == minimum }.map { player in
-                let data = currentRoundScores[player.id] ?? RoundScore(score: 0, tilesShut: 0)
-                return WinnerSummary(playerName: player.name, score: data.score, tilesShut: data.tilesShut)
-            }
+            return contenders.filter { $0.totalScore == minimum }
         }
     }
 
@@ -585,7 +646,8 @@ final class GameStore: ObservableObject {
             theme: ThemeManager.persistedTheme(),
             currentRoundScores: currentRoundScores,
             completedRoundScore: completedRoundScore,
-            completedRoundRoll: completedRoundRoll
+            completedRoundRoll: completedRoundRoll,
+            roundHistory: roundHistory
         )
         storage.persist(snapshot, key: .snapshot)
     }
