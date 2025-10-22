@@ -88,12 +88,12 @@ private struct WordSoundBuilderView: View {
             Stepper(value: $wordLength, in: 2...6, step: 1) {
                 Text("Word length: \(wordLength) letters")
             }
-            .onChange(of: wordLength) { _ in generateWord() }
+            .onChange(of: wordLength) { generateWord() }
 
             Toggle("Stream premium Voice RSS", isOn: $usePremiumVoice)
                 .toggleStyle(SwitchToggleStyle(tint: .cyan))
-                .onChange(of: usePremiumVoice) { enabled in
-                    status = enabled ? "Premium voice requests fallback to on-device speech in offline mode." : "Using system speech engine."
+                .onChange(of: usePremiumVoice) {
+                    status = usePremiumVoice ? "Premium voice requests fallback to on-device speech in offline mode." : "Using system speech engine."
                 }
 
             HStack(spacing: 10) {
@@ -186,7 +186,7 @@ private struct ShapeExplorerView: View {
                 Stepper(value: $sides, in: 3...10) {
                     Text("Sides: \(sides)")
                 }
-                .onChange(of: sides) { _ in tappedVertices.removeAll() }
+                .onChange(of: sides) { tappedVertices.removeAll() }
             }
 
             GeometryReader { geometry in
@@ -299,7 +299,7 @@ private struct DiceDotDetectiveView: View {
             Stepper(value: $diceCount, in: 1...6) {
                 Text("Dice: \(diceCount)")
             }
-            .onChange(of: diceCount) { _ in reset() }
+            .onChange(of: diceCount) { reset() }
 
             Text("Pick your predicted total")
                 .foregroundColor(.white.opacity(0.8))
@@ -477,7 +477,7 @@ private struct MathMixerView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .onChange(of: operation) { _ in roll() }
+            .onChange(of: operation) { roll() }
 
             Picker("Difficulty", selection: $difficulty) {
                 ForEach(Difficulty.allCases) { diff in
@@ -485,7 +485,7 @@ private struct MathMixerView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .onChange(of: difficulty) { _ in roll() }
+            .onChange(of: difficulty) { roll() }
 
             Text("What is \(operands.0) \(operation.rawValue) \(operands.1)?")
                 .font(.title3.weight(.semibold))

@@ -45,13 +45,37 @@ struct GameBoardView: View {
             }
         }
         .onAppear { configureSoloCelebrationState() }
-        .onChange(of: soloCelebrationSummary?.id) { _ in
+        .onChange(of: soloCelebrationSummary?.id) {
             configureSoloCelebrationState()
         }
     }
 }
 
 private extension GameBoardView {
+    private var soloCelebrationSummary: WinnerSummary? {
+        guard store.players.count == 1 else { return nil }
+        guard store.phase == .roundComplete else { return nil }
+        guard (store.completedRoundScore ?? Int.max) == 0 else { return nil }
+        if let summary = store.previousWinner {
+            return summary
+        }
+        if let player = store.players.first {
+            return WinnerSummary(playerName: player.name, score: 0, tilesShut: store.options.maxTile)
+        }
+        return nil
+    }
+
+    private var soloCelebrationHeadline: String { "Box Shut!" }
+
+    private func soloCelebrationMessage(for summary: WinnerSummary) -> String {
+        let trimmedName = summary.playerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let displayName = trimmedName.isEmpty ? "Player" : trimmedName
+        if summary.tilesShut >= store.options.maxTile {
+            return "\(displayName) closed every tile for a flawless finish!"
+        }
+        return "\(displayName) shut the box with \(summary.tilesShut) tiles!"
+    }
+
     private func configureSoloCelebrationState() {
         guard let summary = soloCelebrationSummary else {
             withAnimation {
