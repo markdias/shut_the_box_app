@@ -6,6 +6,9 @@ struct GameBoardView: View {
 
     var body: some View {
         VStack(spacing: 24) {
+            if store.players.count > 1 {
+                TurnStatusView(isCompact: isCompact)
+            }
             AttentionContainer(isActive: diceNeedsAttention, cornerRadius: isCompact ? 24 : 28) {
                 DiceTrayView(isCompact: isCompact)
             }
@@ -61,6 +64,110 @@ private struct AttentionContainer<Content: View>: View {
                     .allowsHitTesting(false)
                     .animation(.easeInOut(duration: 0.2), value: isActive)
             }
+    }
+}
+
+private struct TurnStatusView: View {
+    @EnvironmentObject private var store: GameStore
+    let isCompact: Bool
+
+    private var activePlayerName: String {
+        let trimmed = store.activePlayer?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? "Player" : trimmed
+    }
+
+    private var possessiveName: String {
+        if activePlayerName.lowercased().hasSuffix("s") {
+            return "\(activePlayerName)'"
+        }
+        return "\(activePlayerName)'s"
+    }
+
+    private var statusMessage: String {
+        switch store.phase {
+        case .setup:
+            return "\(activePlayerName) is up first."
+        case .playing:
+            if store.pendingRoll.total > 0 {
+                return "Select tiles totalling \(store.pendingRoll.total)."
+            }
+            return "\(activePlayerName) can roll the dice."
+        case .roundComplete:
+            if store.showWinners {
+                return "Review the results before starting the next round."
+            }
+            return "\(activePlayerName) will start round \(store.round)."
+        }
+    }
+
+    private var startButtonTitle: String {
+        if store.phase == .roundComplete {
+            return "Start Next Round"
+        }
+        return "Start \(possessiveName) Go"
+    }
+
+    private var buttonAccessibilityLabel: Text {
+        switch store.phase {
+        case .roundComplete:
+            if store.showWinners {
+                return Text("Close the results summary before starting the next round")
+            }
+            return Text("Start the next round for \(activePlayerName)")
+        case .setup, .playing:
+            if store.canRollDice {
+                return Text("Start \(activePlayerName)'s turn")
+            }
+            if store.pendingRoll.total > 0 {
+                return Text("Select tiles totalling \(store.pendingRoll.total) before rolling again")
+            }
+            return Text("Wait to continue \(activePlayerName)'s turn")
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: "person.fill")
+                    .font(.title2)
+                    .foregroundColor(.white)
+                    .padding(12)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(activePlayerName)'s Turn")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text(statusMessage)
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.7))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+            }
+
+            Button(action: { store.rollDice() }) {
+                Label(startButtonTitle, systemImage: "play.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(NeonButtonStyle())
+            .disabled(!store.canRollDice)
+            .opacity(store.canRollDice ? 1 : 0.6)
+            .accessibilityLabel(buttonAccessibilityLabel)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: isCompact ? 24 : 28, style: .continuous)
+                .fill(Color.white.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: isCompact ? 24 : 28, style: .continuous)
+                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                )
+        )
+        .animation(.easeInOut(duration: 0.2), value: store.canRollDice)
     }
 }
 
@@ -143,16 +250,7 @@ struct DiceTrayView: View {
         }
     }
 
-    private var canRoll: Bool {
-        switch store.phase {
-        case .setup:
-            return true
-        case .playing:
-            return store.pendingRoll.total == 0 && store.selectedTiles.isEmpty
-        case .roundComplete:
-            return !store.showWinners
-        }
-    }
+    private var canRoll: Bool { store.canRollDice }
 
     private var dieSize: CGFloat { isCompact ? 96 : 120 }
 
