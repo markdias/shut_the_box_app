@@ -50,6 +50,17 @@ final class GameStore: ObservableObject {
         return allowSingle ? dieMode : .double
     }
 
+    var canRollDice: Bool {
+        switch phase {
+        case .setup:
+            return true
+        case .playing:
+            return pendingRoll.total == 0 && selectedTiles.isEmpty
+        case .roundComplete:
+            return !showWinners
+        }
+    }
+
     private let storage = StorageProvider()
     private var riggedRoll: DiceRoll?
     private var currentRoundScores: [UUID: RoundScore]
