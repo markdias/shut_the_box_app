@@ -280,7 +280,16 @@ struct DiceTrayView: View {
                 .foregroundColor(.white)
 
             ZStack(alignment: .top) {
-                if showBoxNotShutBanner {
+                if let celebration = soloCelebrationSummary {
+                    WinCelebrationView(
+                        headline: soloCelebrationHeadline,
+                        message: soloCelebrationMessage(for: celebration),
+                        winners: [celebration],
+                        accent: Color.mint
+                    )
+                    .frame(maxWidth: .infinity)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                } else if showBoxNotShutBanner {
                     DidNotShutBanner()
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
@@ -302,7 +311,7 @@ struct DiceTrayView: View {
                             }
                         }
                     }
-                    .padding(.top, bannerClearance)
+                    .padding(.top, overlayClearance)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -429,9 +438,41 @@ struct DiceTrayView: View {
         }
     }
 
+    private var soloCelebrationSummary: WinnerSummary? {
+        guard store.players.count == 1 else { return nil }
+        guard store.phase == .roundComplete else { return nil }
+        guard (store.completedRoundScore ?? Int.max) == 0 else { return nil }
+        if let summary = store.previousWinner {
+            return summary
+        }
+        if let player = store.players.first {
+            return WinnerSummary(playerName: player.name, score: 0, tilesShut: store.options.maxTile)
+        }
+        return nil
+    }
+
+    private var soloCelebrationHeadline: String { "Box Shut!" }
+
+    private func soloCelebrationMessage(for summary: WinnerSummary) -> String {
+        let trimmedName = summary.playerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let displayName = trimmedName.isEmpty ? "Player" : trimmedName
+        if summary.tilesShut >= store.options.maxTile {
+            return "\(displayName) closed every tile for a flawless finish!"
+        }
+        return "\(displayName) shut the box with \(summary.tilesShut) tiles!"
+    }
+
+    private var overlayClearance: CGFloat {
+        if soloCelebrationSummary != nil {
+            return isCompact ? 96 : 112
+        }
+        return bannerClearance
+    }
+
     private var showBoxNotShutBanner: Bool {
         guard store.players.count == 1 else { return false }
         guard store.phase == .roundComplete else { return false }
+        guard soloCelebrationSummary == nil else { return false }
         return (store.players.first?.lastScore ?? 0) > 0
     }
 
